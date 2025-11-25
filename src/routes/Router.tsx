@@ -16,7 +16,15 @@ import { FinancePage } from '@/features/account/pages/FinancePage';
 import { CheckoutPage } from '@/features/checkout/pages/CheckoutPage';
 
 export const Router: React.FC = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-base-100">
+        <span className="loading loading-spinner loading-lg text-primary"></span>
+      </div>
+    );
+  }
 
   return (
     <Routes>
@@ -35,7 +43,7 @@ export const Router: React.FC = () => {
             <Route path="/categories" element={<CategoriesPage />} />
 
             {/* Checkout/Plans Routes */}
-            <Route path="/checkout" element={<CheckoutPage withHeader={true} />} />
+            <Route path="/checkout" element={<CheckoutPage />} />
             <Route path="/plans" element={<Navigate to="/checkout" replace />} />
 
             {/* Account routes */}

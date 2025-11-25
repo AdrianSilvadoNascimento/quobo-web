@@ -181,13 +181,19 @@ export const DashboardLayout: React.FC = () => {
                 role="button"
                 className="flex items-center gap-2 ml-2 hover:bg-slate-50 p-1 rounded-lg transition-colors border border-transparent hover:border-slate-100 cursor-pointer"
               >
-                {user?.avatar && (
+                {user?.avatar ? (
                   <div className="avatar">
                     <img
                       src={user.avatar}
                       alt="User Avatar"
                       className="w-9 rounded-full border-2 border-white shadow-md"
                     />
+                  </div>
+                ) : (
+                  <div className="avatar">
+                    <div className="bg-gradient-to-br from-[#22B8E6] via-[#2563EB] to-[#1E40AF] w-9 flex items-center justify-center rounded-full border-2 border-white shadow-md">
+                      <span className="text-xs font-bold text-white">{user?.name.slice(0, 2).toUpperCase()}</span>
+                    </div>
                   </div>
                 )}
                 <div className="hidden lg:block text-sm text-left">

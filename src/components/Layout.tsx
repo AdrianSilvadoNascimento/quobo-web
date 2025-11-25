@@ -5,7 +5,6 @@ import {
   Package,
   ArrowLeftRight,
   Users,
-  CreditCard,
   LogOut,
   Menu,
   X,
