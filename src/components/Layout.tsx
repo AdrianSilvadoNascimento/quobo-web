@@ -28,7 +28,6 @@ export const Layout: React.FC<LayoutProps> = ({ children, onLogout }) => {
     { label: 'Produtos', icon: Package, path: '/products' },
     { label: 'Movimentações', icon: ArrowLeftRight, path: '/movements' },
     { label: 'Clientes', icon: Users, path: '/customers' },
-    { label: 'Assinatura', icon: CreditCard, path: '/subscription' },
   ];
 
   const isActive = (path: string) => location.pathname === path;

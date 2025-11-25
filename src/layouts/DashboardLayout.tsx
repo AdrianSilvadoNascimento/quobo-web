@@ -1,123 +1,169 @@
 import React, { useState } from 'react';
-import { Link, useLocation, Outlet } from 'react-router-dom';
+import { useLocation, Outlet, useNavigate, Link } from 'react-router-dom';
+import { Sidebar, Menu, MenuItem } from 'react-pro-sidebar';
 import { useAuth } from '../contexts/AuthContext';
 import {
   LayoutDashboard,
   Package,
   ArrowLeftRight,
   Users,
-  CreditCard,
   LogOut,
-  Menu,
-  X,
   Bell,
-  Search,
-  Box
+  Menu as MenuIcon,
+  Tag,
+  ChevronDown,
+  CreditCard,
+  Settings,
+  User,
 } from 'lucide-react';
+
+import QuoboIcon from '@/assets/quobo-icon.svg';
 
 export const DashboardLayout: React.FC = () => {
   const { logout, user } = useAuth();
-  const [isSidebarOpen, setSidebarOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
+  const [toggled, setToggled] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+
+
 
   const navItems = [
     { label: 'Visão Geral', icon: LayoutDashboard, path: '/dashboard' },
     { label: 'Produtos', icon: Package, path: '/products' },
     { label: 'Movimentações', icon: ArrowLeftRight, path: '/movements' },
-    { label: 'Clientes', icon: Users, path: '/customers' },
-    { label: 'Assinatura', icon: CreditCard, path: '/subscription' },
+    { label: 'Categorias', icon: Tag, path: '/categories' },
+    { label: 'Clientes', icon: Users, path: '/customers' }
   ];
 
   const isActive = (path: string) => location.pathname === path;
 
   return (
     <div className="flex h-screen bg-slate-50 text-slate-800 font-sans overflow-hidden">
-      {/* Mobile Sidebar Overlay */}
-      {isSidebarOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
       {/* Sidebar */}
-      <aside
-        className={`
-          fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-slate-200 shadow-sm transform transition-transform duration-300 ease-in-out
-          lg:static lg:transform-none
-          ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-        `}
+      <Sidebar
+        collapsed={collapsed}
+        toggled={toggled}
+        onBackdropClick={() => setToggled(false)}
+        breakPoint="lg"
+        backgroundColor="#ffffff"
+        rootStyles={{
+          border: 'none',
+          borderRight: '1px solid rgb(226, 232, 240)',
+        }}
       >
         <div className="flex flex-col h-full">
+          {/* Logo Section */}
           <div className="flex items-center justify-center h-16 border-b border-slate-100 px-6">
             <div className="flex items-center gap-2 font-bold text-2xl text-brand-700">
-              <Box className="w-8 h-8 fill-brand-600 text-white p-1 rounded-lg" />
-              <span>Quobo</span>
+              <div className="flex items-center justify-center border-2 border-white shadow-md w-12 h-12 rounded-full bg-gradient-to-br from-[#22B8E6] via-[#2563EB] to-[#1E40AF]">
+                <img src={QuoboIcon} alt="Quobo Logo" className="w-10 h-auto" />
+              </div>
+              {!collapsed && <span className="text-transparent bg-clip-text bg-gradient-to-br from-[#22B8E6] via-[#2563EB] to-[#1E40AF]">Quobo</span>}
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto py-6 px-3 space-y-1">
-            <div className="px-3 mb-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">
-              Menu Principal
-            </div>
-            {navItems.map((item) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                onClick={() => setSidebarOpen(false)}
-                className={`
-                  flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
-                  ${isActive(item.path)
-                    ? 'bg-brand-50 text-brand-700'
-                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'}
-                `}
-              >
-                <item.icon className={`w-5 h-5 mr-3 ${isActive(item.path) ? 'text-brand-600' : 'text-slate-400'}`} />
-                {item.label}
-              </Link>
-            ))}
-          </div>
-
-          <div className="p-4 border-t border-slate-100">
-            <button
-              onClick={logout}
-              className="flex items-center w-full px-3 py-2.5 rounded-lg text-sm font-medium text-slate-600 hover:bg-red-50 hover:text-red-600 transition-colors"
+          {/* Menu Items */}
+          <div className="flex-1 overflow-y-auto py-6">
+            {!collapsed && (
+              <div className="px-6 mb-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                Menu Principal
+              </div>
+            )}
+            <Menu
+              menuItemStyles={{
+                button: ({ active }) => ({
+                  backgroundColor: active ? 'rgb(240, 249, 255)' : 'transparent',
+                  color: active ? 'rgb(3, 105, 161)' : 'rgb(71, 85, 105)',
+                  fontWeight: active ? '600' : '500',
+                  fontSize: '0.875rem',
+                  padding: '10px 20px',
+                  margin: '4px 12px',
+                  borderRadius: '8px',
+                  transition: 'all 0.2s',
+                  '&:hover': {
+                    backgroundColor: active ? 'rgb(240, 249, 255)' : 'rgb(248, 250, 252)',
+                    color: active ? 'rgb(3, 105, 161)' : 'rgb(15, 23, 42)',
+                  },
+                }),
+              }}
             >
-              <LogOut className="w-5 h-5 mr-3" />
-              Sair da conta
-            </button>
+              {navItems.map((item) => (
+                <MenuItem
+                  key={item.path}
+                  active={isActive(item.path)}
+                  icon={
+                    <item.icon
+                      className={`w-5 h-5 ${isActive(item.path) ? 'text-brand-600' : 'text-slate-400'
+                        }`}
+                    />
+                  }
+                  onClick={() => {
+                    navigate(item.path);
+                    setToggled(false);
+                  }}
+                >
+                  {item.label}
+                </MenuItem>
+              ))}
+            </Menu>
+          </div>
+
+          {/* Logout Button */}
+          <div className="p-4 border-t border-slate-100">
+            <Menu
+              menuItemStyles={{
+                button: {
+                  color: 'rgb(71, 85, 105)',
+                  fontWeight: '500',
+                  fontSize: '0.875rem',
+                  padding: '10px 20px',
+                  borderRadius: '8px',
+                  transition: 'all 0.2s',
+                  '&:hover': {
+                    backgroundColor: 'rgb(254, 242, 242)',
+                    color: 'rgb(220, 38, 38)',
+                  },
+                },
+              }}
+            >
+              <MenuItem
+                icon={<LogOut className="w-5 h-5" />}
+                onClick={logout}
+              >
+                Sair da conta
+              </MenuItem>
+            </Menu>
           </div>
         </div>
-      </aside>
+      </Sidebar>
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col h-screen overflow-hidden">
         {/* Topbar */}
-        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 lg:px-8">
+        <header className="h-16 w-full bg-white border-b border-slate-200 flex items-center justify-between px-4 lg:px-8">
           <button
-            className="p-2 -ml-2 rounded-md lg:hidden text-slate-600 hover:bg-slate-100"
-            onClick={() => setSidebarOpen(!isSidebarOpen)}
+            className="p-2 -ml-2 rounded-md text-slate-600 hover:bg-slate-100 transition-all duration-300 ease-in-out lg:hidden"
+            onClick={() => setToggled(!toggled)}
           >
-            {isSidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            <MenuIcon className="w-6 h-6" />
           </button>
 
-          <div className="hidden md:flex flex-1 max-w-xl mx-4 relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Search className="h-4 w-4 text-slate-400" />
-            </div>
-            <input
-              type="text"
-              placeholder="Busque por produtos, movimentos ou configurações..."
-              className="block w-full pl-10 pr-3 py-2 border border-slate-200 rounded-lg leading-5 bg-slate-50 text-slate-900 placeholder-slate-400 focus:outline-none focus:bg-white focus:ring-1 focus:ring-brand-500 focus:border-brand-500 sm:text-sm transition duration-150 ease-in-out"
-            />
-          </div>
+          <button
+            className="p-2 -ml-2 rounded-md text-slate-600 hover:bg-slate-100 transition-all duration-300 ease-in-out hidden lg:block"
+            onClick={() => setCollapsed(!collapsed)}
+          >
+            <MenuIcon className="w-6 h-6" />
+          </button>
 
           <div className="flex items-center gap-4">
             <div className="text-xs text-slate-500 hidden sm:block text-right">
-              <p>Plano <span className="font-semibold text-brand-600">Free</span></p>
+              <p>
+                Plano <span className="font-semibold text-primary">Free</span>
+              </p>
               <p>Expira em 2 dias</p>
             </div>
-            <button className="bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold py-2 px-4 rounded-full transition-colors hidden sm:block shadow-sm">
+            <button className="btn btn-primary btn-sm bg-gradient-to-br from-[#22B8E6] via-[#2563EB] to-[#1E40AF] opacity-80 text-white text-xs font-bold rounded-full transition-colors hidden sm:block">
               Fazer Upgrade
             </button>
 
@@ -128,17 +174,72 @@ export const DashboardLayout: React.FC = () => {
               <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
             </button>
 
-            <div className="flex items-center gap-2 ml-2">
-              {user?.avatar && (
-                <img
-                  src={user.avatar}
-                  alt="User Avatar"
-                  className="w-8 h-8 rounded-full ring-2 ring-white shadow-sm object-cover"
-                />
-              )}
-              <div className="hidden lg:block text-sm">
-                <p className="font-medium text-slate-700">{user?.name}</p>
+            {/* User Dropdown - DaisyUI */}
+            <div className="dropdown dropdown-end">
+              <div
+                tabIndex={0}
+                role="button"
+                className="flex items-center gap-2 ml-2 hover:bg-slate-50 p-1 rounded-lg transition-colors border border-transparent hover:border-slate-100 cursor-pointer"
+              >
+                {user?.avatar && (
+                  <div className="avatar">
+                    <img
+                      src={user.avatar}
+                      alt="User Avatar"
+                      className="w-9 rounded-full border-2 border-white shadow-md"
+                    />
+                  </div>
+                )}
+                <div className="hidden lg:block text-sm text-left">
+                  <p className="font-medium text-slate-700 leading-tight">{user?.name}</p>
+                </div>
+                <ChevronDown className="w-4 h-4 text-slate-400" />
               </div>
+
+              {/* Dropdown Content */}
+              <ul
+                tabIndex={0}
+                className="dropdown-content menu bg-white rounded-xl shadow-lg border border-slate-100 w-52 p-0 mt-3 z-50"
+              >
+                {/* User Info Header */}
+                <li className="menu-title px-4 py-3 border-b border-slate-50">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-800 truncate">{user?.name}</p>
+                    <p className="text-xs text-slate-500 truncate font-normal">{user?.email}</p>
+                  </div>
+                </li>
+
+                {/* Menu Items */}
+                <li>
+                  <Link to="/account/profile" className="flex items-center gap-2 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-brand-600">
+                    <User className="w-4 h-4" />
+                    Minha Conta
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/account/finance" className="flex items-center gap-2 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-brand-600">
+                    <CreditCard className="w-4 h-4" />
+                    Financeiro
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/settings" className="flex items-center gap-2 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-brand-600">
+                    <Settings className="w-4 h-4" />
+                    Configurações
+                  </Link>
+                </li>
+
+                {/* Logout - Separated */}
+                <li className="border-t border-slate-50">
+                  <button
+                    onClick={logout}
+                    className="flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 w-full"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    Sair
+                  </button>
+                </li>
+              </ul>
             </div>
           </div>
         </header>
