@@ -1,0 +1,313 @@
+import React, { useState, type FormEvent } from 'react';
+import { CreditCard, Lock, ShieldCheck, X } from 'lucide-react';
+import type { PlanModel, CreditCardModel } from '../types/Plan.model';
+import { CreditCard3D } from './CreditCard3D';
+
+interface CheckoutModalProps {
+  plan: PlanModel;
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export const CheckoutModal: React.FC<CheckoutModalProps> = ({ plan, isOpen, onClose }) => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [isFlipped, setIsFlipped] = useState(false);
+  const [cardData, setCardData] = useState<CreditCardModel>({
+    card_number: '',
+    card_holder_name: '',
+    expiration_month: new Date().getMonth() + 1,
+    expiration_year: new Date().getFullYear(),
+    security_code: '',
+    cpf_cnpj: '',
+  });
+
+  const handleInputChange = (field: keyof CreditCardModel, value: string | number) => {
+    setCardData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const formatCardNumber = (value: string): string => {
+    const cleaned = value.replace(/\D/g, '');
+    const chunks = cleaned.match(/.{1,4}/g) || [];
+    return chunks.join(' ');
+  };
+
+  const formatCPFCNPJ = (value: string): string => {
+    const cleaned = value.replace(/\D/g, '');
+    if (cleaned.length <= 11) {
+      return cleaned
+        .replace(/(\d{3})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+    } else {
+      return cleaned
+        .replace(/(\d{2})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d)/, '$1/$2')
+        .replace(/(\d{4})(\d{1,2})$/, '$1-$2');
+    }
+  };
+
+  const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/\D/g, '');
+    if (value.length <= 16) {
+      handleInputChange('card_number', value);
+    }
+  };
+
+  const handleCPFCNPJChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/\D/g, '');
+    if (value.length <= 14) {
+      handleInputChange('cpf_cnpj', value);
+    }
+  };
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    try {
+      // Mock successful checkout
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      alert('Checkout realizado com sucesso! (Mock)');
+      onClose();
+    } catch (error) {
+      console.error('Checkout error:', error);
+      alert('Erro ao processar checkout. Por favor, tente novamente.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <>
+      <div className="modal modal-open backdrop-blur-sm bg-black/30">
+        <div className="modal-box max-w-5xl p-0 overflow-hidden bg-white shadow-2xl rounded-2xl">
+          {/* Close Button */}
+          <button
+            onClick={onClose}
+            className="absolute right-4 top-4 btn btn-sm btn-circle btn-ghost z-50 hover:bg-slate-100"
+            disabled={isLoading}
+          >
+            <X className="w-5 h-5 text-slate-500" />
+          </button>
+
+          <div className="flex flex-col lg:flex-row h-full max-h-[90vh] overflow-y-auto lg:overflow-hidden">
+            {/* Left Column: Plan Summary & 3D Card */}
+            <div className="lg:w-5/12 bg-slate-50 p-8 flex flex-col justify-between border-r border-slate-100">
+              <div>
+                <h3 className="font-bold text-2xl text-slate-800 mb-2">Resumo do Pedido</h3>
+                <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm mb-8">
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <h4 className="font-bold text-lg text-slate-800">Plano {plan.name}</h4>
+                      <p className="text-sm text-slate-500">{plan.description}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-bold text-xl text-brand-600">
+                        R$ {plan.value.toFixed(2)}
+                      </p>
+                      <p className="text-xs text-slate-400">/mês</p>
+                    </div>
+                  </div>
+                  <div className="divider my-2"></div>
+                  <ul className="text-sm space-y-2 text-slate-600">
+                    <li className="flex justify-between">
+                      <span>Produtos</span>
+                      <span className="font-medium">
+                        {plan.features.product_limits.unlimited
+                          ? 'Ilimitados'
+                          : plan.features.product_limits.max_products}
+                      </span>
+                    </li>
+                    <li className="flex justify-between">
+                      <span>Usuários</span>
+                      <span className="font-medium">
+                        {plan.features.user_limits.unlimited
+                          ? 'Ilimitados'
+                          : plan.features.user_limits.max_users}
+                      </span>
+                    </li>
+                  </ul>
+                </div>
+
+                {/* 3D Card Container */}
+                <div className="hidden lg:flex justify-center items-center py-8 perspective-1000">
+                  <CreditCard3D
+                    cardNumber={cardData.card_number}
+                    holderName={cardData.card_holder_name}
+                    expiryMonth={cardData.expiration_month}
+                    expiryYear={cardData.expiration_year}
+                    cvv={cardData.security_code}
+                    isFlipped={isFlipped}
+                  />
+                </div>
+              </div>
+
+              <div className="hidden lg:flex items-center gap-3 text-slate-400 text-xs justify-center mt-4">
+                <ShieldCheck className="w-4 h-4" />
+                <span>Pagamento 100% seguro e criptografado</span>
+              </div>
+            </div>
+
+            {/* Right Column: Payment Form */}
+            <div className="lg:w-7/12 p-8 bg-white overflow-y-auto">
+              <div className="mb-6">
+                <h3 className="font-bold text-2xl text-slate-800 flex items-center gap-2">
+                  <CreditCard className="w-6 h-6 text-brand-600" />
+                  Dados do Pagamento
+                </h3>
+                <p className="text-slate-500 mt-1">Preencha os dados do seu cartão de crédito</p>
+              </div>
+
+              <form onSubmit={handleSubmit} className="space-y-5">
+                {/* Mobile Card Preview (Hidden on Desktop) */}
+                <div className="lg:hidden mb-6 flex justify-center">
+                  <div className="scale-75 origin-top w-[380px] max-w-full">
+                    <CreditCard3D
+                      cardNumber={cardData.card_number}
+                      holderName={cardData.card_holder_name}
+                      expiryMonth={cardData.expiration_month}
+                      expiryYear={cardData.expiration_year}
+                      cvv={cardData.security_code}
+                      isFlipped={isFlipped}
+                    />
+                  </div>
+                </div>
+
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text font-medium text-slate-700">Número do Cartão</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="0000 0000 0000 0000"
+                    className="input input-bordered w-full focus:input-primary transition-all"
+                    value={formatCardNumber(cardData.card_number)}
+                    onChange={handleCardNumberChange}
+                    onFocus={() => setIsFlipped(false)}
+                    required
+                    maxLength={19}
+                  />
+                </div>
+
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text font-medium text-slate-700">Nome no Cartão</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="NOME COMO ESTÁ NO CARTÃO"
+                    className="input input-bordered w-full focus:input-primary transition-all uppercase"
+                    value={cardData.card_holder_name}
+                    onChange={(e) => handleInputChange('card_holder_name', e.target.value.toUpperCase())}
+                    onFocus={() => setIsFlipped(false)}
+                    required
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="form-control">
+                    <label className="label">
+                      <span className="label-text font-medium text-slate-700">Validade</span>
+                    </label>
+                    <div className="flex gap-2">
+                      <select
+                        className="select select-bordered w-full focus:select-primary"
+                        value={cardData.expiration_month}
+                        onChange={(e) => handleInputChange('expiration_month', parseInt(e.target.value))}
+                        onFocus={() => setIsFlipped(false)}
+                        required
+                      >
+                        {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
+                          <option key={month} value={month}>
+                            {month.toString().padStart(2, '0')}
+                          </option>
+                        ))}
+                      </select>
+                      <select
+                        className="select select-bordered w-full focus:select-primary"
+                        value={cardData.expiration_year}
+                        onChange={(e) => handleInputChange('expiration_year', parseInt(e.target.value))}
+                        onFocus={() => setIsFlipped(false)}
+                        required
+                      >
+                        {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() + i).map((year) => (
+                          <option key={year} value={year}>
+                            {year}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="form-control">
+                    <label className="label">
+                      <span className="label-text font-medium text-slate-700">CVV</span>
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        placeholder="123"
+                        className="input input-bordered w-full focus:input-primary transition-all"
+                        value={cardData.security_code}
+                        onChange={(e) => {
+                          const value = e.target.value.replace(/\D/g, '');
+                          if (value.length <= 4) handleInputChange('security_code', value);
+                        }}
+                        onFocus={() => setIsFlipped(true)}
+                        onBlur={() => setIsFlipped(false)}
+                        required
+                        maxLength={4}
+                      />
+                      <Lock className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text font-medium text-slate-700">CPF/CNPJ do Titular</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="000.000.000-00"
+                    className="input input-bordered w-full focus:input-primary transition-all"
+                    value={formatCPFCNPJ(cardData.cpf_cnpj)}
+                    onChange={handleCPFCNPJChange}
+                    onFocus={() => setIsFlipped(false)}
+                    required
+                  />
+                </div>
+
+                <div className="pt-4">
+                  <button
+                    type="submit"
+                    className="btn btn-primary btn-block h-12 text-lg shadow-lg shadow-brand-500/30 hover:shadow-brand-500/50 transition-all"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? (
+                      <>
+                        <span className="loading loading-spinner"></span>
+                        Processando...
+                      </>
+                    ) : (
+                      `Confirmar Assinatura`
+                    )}
+                  </button>
+                  <p className="text-center text-xs text-slate-400 mt-4">
+                    Ao confirmar, você concorda com nossos Termos de Uso e Política de Privacidade.
+                  </p>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+        <form method="dialog" className="modal-backdrop" onClick={onClose}>
+          <button>close</button>
+        </form>
+      </div>
+    </>
+  );
+};

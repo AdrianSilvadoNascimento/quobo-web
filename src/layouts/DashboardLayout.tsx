@@ -26,8 +26,6 @@ export const DashboardLayout: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-
-
   const navItems = [
     { label: 'Visão Geral', icon: LayoutDashboard, path: '/dashboard' },
     { label: 'Produtos', icon: Package, path: '/products' },
@@ -163,7 +161,9 @@ export const DashboardLayout: React.FC = () => {
               </p>
               <p>Expira em 2 dias</p>
             </div>
-            <button className="btn btn-primary btn-sm bg-gradient-to-br from-[#22B8E6] via-[#2563EB] to-[#1E40AF] opacity-80 text-white text-xs font-bold rounded-full transition-colors hidden sm:block">
+            <button
+              onClick={() => navigate('/checkout')}
+              className="btn btn-primary btn-sm bg-gradient-to-br from-[#22B8E6] via-[#2563EB] to-[#1E40AF] opacity-80 text-white text-xs font-bold rounded-full transition-colors hidden sm:block">
               Fazer Upgrade
             </button>
 

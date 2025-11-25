@@ -13,6 +13,7 @@ import { CategoriesPage } from '../features/categories/pages/CategoriesPage';
 import { AccountLayout } from '@/features/account/layouts/AccountLayout';
 import { ProfilePage } from '@/features/account/pages/ProfilePage';
 import { FinancePage } from '@/features/account/pages/FinancePage';
+import { CheckoutPage } from '@/features/checkout/pages/CheckoutPage';
 
 export const Router: React.FC = () => {
   const { isAuthenticated } = useAuth();
@@ -24,26 +25,32 @@ export const Router: React.FC = () => {
       <Route path="/register" element={!isAuthenticated ? <RegisterPage /> : <Navigate to="/dashboard" />} />
 
       {/* Protected Routes */}
-      {isAuthenticated ? (
-        <Route element={<DashboardLayout />}>
-          <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="/products" element={<ItemsPage />} />
-          <Route path="/movements" element={<MovementsPage />} />
-          <Route path="/customers" element={<CustomersPage />} />
-          <Route path="/categories" element={<CategoriesPage />} />
+      {
+        isAuthenticated ? (
+          <Route element={<DashboardLayout />}>
+            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/products" element={<ItemsPage />} />
+            <Route path="/movements" element={<MovementsPage />} />
+            <Route path="/customers" element={<CustomersPage />} />
+            <Route path="/categories" element={<CategoriesPage />} />
 
-          {/* Account routes */}
-          <Route path="/account" element={<AccountLayout />}>
-            <Route index element={<Navigate to="profile" replace />} />
-            <Route path="profile" element={<ProfilePage />} />
-            <Route path="finance" element={<FinancePage />} />
+            {/* Checkout/Plans Routes */}
+            <Route path="/checkout" element={<CheckoutPage withHeader={true} />} />
+            <Route path="/plans" element={<Navigate to="/checkout" replace />} />
+
+            {/* Account routes */}
+            <Route path="/account" element={<AccountLayout />}>
+              <Route index element={<Navigate to="profile" replace />} />
+              <Route path="profile" element={<ProfilePage />} />
+              <Route path="finance" element={<FinancePage />} />
+            </Route>
+
+            <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Route>
-
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
-        </Route>
-      ) : (
-        <Route path="*" element={<Navigate to="/login" replace />} />
-      )}
+        ) : (
+          <Route path="*" element={<Navigate to="/login" replace />} />
+        )
+      }
     </Routes>
   );
 }
