@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation, Outlet, useNavigate, Link } from 'react-router-dom';
 import { Sidebar, Menu, MenuItem } from 'react-pro-sidebar';
 import { useAuth } from '../contexts/AuthContext';
+import { ExpiredSubscriptionModal } from '../components/ExpiredSubscriptionModal';
 import {
   LayoutDashboard,
   Package,
@@ -20,9 +21,10 @@ import {
 import QuoboIcon from '@/assets/quobo-icon.svg';
 
 export const DashboardLayout: React.FC = () => {
-  const { logout, user } = useAuth();
+  const { logout, user, expirationDays, isTrial, isAssinant, isSubscriptionExpired } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
   const [toggled, setToggled] = useState(false);
+  const [modalDismissed, setModalDismissed] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -35,6 +37,25 @@ export const DashboardLayout: React.FC = () => {
   ];
 
   const isActive = (path: string) => location.pathname === path;
+
+  // Route protection: redirect to checkout if subscription expired
+  useEffect(() => {
+    if (isSubscriptionExpired && location.pathname !== '/checkout') {
+      navigate('/checkout', { replace: true });
+    }
+  }, [isSubscriptionExpired, location.pathname, navigate]);
+
+  // Collapse sidebar when subscription is expired
+  useEffect(() => {
+    if (isSubscriptionExpired) {
+      setCollapsed(true);
+      setToggled(false);
+    }
+  }, [isSubscriptionExpired]);
+
+  const handleModalDismiss = () => {
+    setModalDismissed(true);
+  };
 
   return (
     <div className="flex h-screen bg-slate-50 text-slate-800 font-sans overflow-hidden">
@@ -92,7 +113,7 @@ export const DashboardLayout: React.FC = () => {
                   active={isActive(item.path)}
                   icon={
                     <item.icon
-                      className={`w-5 h-5 ${isActive(item.path) ? 'text-brand-600' : 'text-slate-400'
+                      className={`w-5 h-5 ${isActive(item.path) ? 'text-brand-600' : 'text-slate-400'}
                         }`}
                     />
                   }
@@ -140,26 +161,38 @@ export const DashboardLayout: React.FC = () => {
       <div className="flex-1 flex flex-col h-screen overflow-hidden">
         {/* Topbar */}
         <header className="h-16 w-full bg-white border-b border-slate-200 flex items-center justify-between px-4 lg:px-8">
-          <button
-            className="p-2 -ml-2 rounded-md text-slate-600 hover:bg-slate-100 transition-all duration-300 ease-in-out lg:hidden"
-            onClick={() => setToggled(!toggled)}
-          >
-            <MenuIcon className="w-6 h-6" />
-          </button>
-
-          <button
-            className="p-2 -ml-2 rounded-md text-slate-600 hover:bg-slate-100 transition-all duration-300 ease-in-out hidden lg:block"
-            onClick={() => setCollapsed(!collapsed)}
-          >
-            <MenuIcon className="w-6 h-6" />
-          </button>
+          {!isSubscriptionExpired ? (
+            <>
+              <button
+                className="p-2 -ml-2 rounded-md text-slate-600 hover:bg-slate-100 transition-all duration-300 ease-in-out lg:hidden"
+                onClick={() => setToggled(!toggled)}
+              >
+                <MenuIcon className="w-6 h-6" />
+              </button>
+              <button
+                className="p-2 -ml-2 rounded-md text-slate-600 hover:bg-slate-100 transition-all duration-300 ease-in-out hidden lg:block"
+                onClick={() => setCollapsed(!collapsed)}
+              >
+                <MenuIcon className="w-6 h-6" />
+              </button>
+            </>
+          ) : (
+            <div></div>
+          )}
 
           <div className="flex items-center gap-4">
             <div className="text-xs text-slate-500 hidden sm:block text-right">
               <p>
-                Plano <span className="font-semibold text-primary">Free</span>
+                Plano <span className="font-semibold text-primary">
+                  {isTrial ? 'Trial' : isAssinant ? 'Premium' : 'Free'}
+                </span>
               </p>
-              <p>Expira em 2 dias</p>
+              {expirationDays !== null && expirationDays > 0 && (
+                <p>Expira em {expirationDays} {expirationDays === 1 ? 'dia' : 'dias'}</p>
+              )}
+              {expirationDays !== null && expirationDays <= 0 && (
+                <p className="text-red-500 font-semibold">Expirado</p>
+              )}
             </div>
             <button
               onClick={() => navigate('/checkout')}
@@ -257,6 +290,9 @@ export const DashboardLayout: React.FC = () => {
           </div>
         </main>
       </div>
+
+      {/* Expired Subscription Modal - shows until user clicks choose plan */}
+      {isSubscriptionExpired && !modalDismissed && <ExpiredSubscriptionModal isTrial={isTrial} onChoosePlan={handleModalDismiss} />}
     </div>
   );
 };

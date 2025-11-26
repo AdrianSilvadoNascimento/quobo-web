@@ -1,28 +1,7 @@
 import axios from 'axios';
 import { server } from './api';
 
-// Define types based on the API response
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  avatar?: string;
-  // Add other fields as needed
-}
-
-export interface Account {
-  id: string;
-  name: string;
-  // Add other fields as needed
-}
-
-export interface LoginResponse {
-  token: string;
-  refresh_token: string; // Still in type but might be empty or ignored
-  account_user: User & { account: Account };
-  account: Account;
-  remember_me: boolean;
-}
+import type { LoginResponseEntity } from '@/features/account/types/login_response.model';
 
 export class AuthService {
   // Access token stored in memory only
@@ -56,7 +35,7 @@ export class AuthService {
   async login(params: { email: string; password: string; remember?: boolean }) {
     try {
       const { email, password, remember } = params;
-      const { data } = await server.api.post<LoginResponse>('/auth/login', { email, password, remember });
+      const { data } = await server.api.post<LoginResponseEntity>('/auth/login', { email, password, remember });
       return data;
     } catch (error) {
       throw error;
@@ -73,15 +52,13 @@ export class AuthService {
   }
 
   async refreshTokenRequest() {
-    // Cookie is sent automatically
-    const { data } = await axios.post<LoginResponse>(`${server.baseURL}/auth/refresh`, {}, { withCredentials: true });
+    const { data } = await axios.post<LoginResponseEntity>(`${server.baseURL}/auth/refresh`, {}, { withCredentials: true });
     return data;
   }
 }
 
 export const authService = new AuthService();
 
-// Request Interceptor
 server.api.interceptors.request.use(
   async config => {
     if (authService.accessToken) {
@@ -92,7 +69,6 @@ server.api.interceptors.request.use(
   error => Promise.reject(error)
 );
 
-// Response Interceptor
 server.api.interceptors.response.use(
   res => res,
   async err => {

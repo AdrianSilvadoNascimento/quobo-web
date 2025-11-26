@@ -1,64 +1,93 @@
 import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
-import { authService, type User, type Account } from '../services/auth.service';
+import { authService } from '../services/auth.service';
+import type { UserModel } from '@/features/account/types/user.model';
+import type { AccountModel } from '@/features/account/types/account.model';
 
 interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (args: { email: string; password: string; remember?: boolean }) => Promise<void>;
   logout: () => void;
-  user: User | null;
-  account: Account | null;
+  user: UserModel | null;
+  account: AccountModel | null;
+  expirationDays: number | null;
+  isTrial: boolean;
+  isAssinant: boolean;
+  expirationDate: Date | null;
+  isSubscriptionExpired: boolean;
+  updateSubscriptionStatus: (expirationDays: number) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  // Optimistic initialization: if 'logged_in' flag exists, assume authenticated
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
     return !!localStorage.getItem('logged_in');
   });
 
-  // If we are optimistically authenticated, we are NOT loading initially (we show the app)
-  // If we are NOT authenticated, we are not loading either (we show login)
-  // But we still need to fetch the real user data in background
   const [isLoading, setIsLoading] = useState(false);
 
-  // Initialize user and account from localStorage to prevent flickering
-  const [user, setUser] = useState<User | null>(() => {
+  const [user, setUser] = useState<UserModel | null>(() => {
     const cached = localStorage.getItem('user_data');
     return cached ? JSON.parse(cached) : null;
   });
 
-  const [account, setAccount] = useState<Account | null>(() => {
+  const [account, setAccount] = useState<AccountModel | null>(() => {
     const cached = localStorage.getItem('account_data');
     return cached ? JSON.parse(cached) : null;
   });
 
+  const [expirationDays, setExpirationDays] = useState<number | null>(() => {
+    const cached = localStorage.getItem('expiration_days');
+    return cached ? parseInt(cached) : null;
+  });
+
+  const [isTrial, setIsTrial] = useState<boolean>(() => {
+    const cached = localStorage.getItem('is_trial');
+    return cached === 'true';
+  });
+
+  const [isAssinant, setIsAssinant] = useState<boolean>(() => {
+    const cached = localStorage.getItem('is_assinant');
+    return cached === 'true';
+  });
+
+  const [expirationDate, setExpirationDate] = useState<Date | null>(() => {
+    const cached = localStorage.getItem('expiration_date');
+    return cached ? new Date(cached) : null;
+  });
+
   const refreshUser = async () => {
     try {
-      // Try to refresh token using cookie
       const data = await authService.refreshTokenRequest();
 
       authService.setAccessToken(data.token);
 
       setUser(data.account_user);
       setAccount(data.account);
+      setExpirationDays(data.expiration_days);
+      setIsTrial(data.is_trial);
+      setIsAssinant(data.is_assinant);
+      setExpirationDate(data.expiration_date ? new Date(data.expiration_date) : null);
       setIsAuthenticated(true);
 
-      // Cache user data to prevent flickering on refresh
       localStorage.setItem('logged_in', 'true');
       localStorage.setItem('user_data', JSON.stringify(data.account_user));
       localStorage.setItem('account_data', JSON.stringify(data.account));
+      localStorage.setItem('expiration_days', data.expiration_days?.toString() || '');
+      localStorage.setItem('is_trial', data.is_trial.toString());
+      localStorage.setItem('is_assinant', data.is_assinant.toString());
+      localStorage.setItem('expiration_date', data.expiration_date?.toString() || '');
     } catch (error) {
-      // If refresh fails (no cookie or invalid), we are not logged in
       setUser(null);
       setAccount(null);
+      setExpirationDays(null);
+      setIsTrial(false);
+      setIsAssinant(false);
+      setExpirationDate(null);
       setIsAuthenticated(false);
 
-      // Clear all cached data
-      localStorage.removeItem('logged_in');
-      localStorage.removeItem('user_data');
-      localStorage.removeItem('account_data');
+      localStorage.clear();
     }
   };
 
@@ -74,12 +103,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       setUser(data.account_user);
       setAccount(data.account);
+      setExpirationDays(data.expiration_days);
+      setIsTrial(data.is_trial);
+      setIsAssinant(data.is_assinant);
+      setExpirationDate(data.expiration_date ? new Date(data.expiration_date) : null);
       setIsAuthenticated(true);
 
-      // Cache user data
       localStorage.setItem('logged_in', 'true');
       localStorage.setItem('user_data', JSON.stringify(data.account_user));
       localStorage.setItem('account_data', JSON.stringify(data.account));
+      localStorage.setItem('expiration_days', data.expiration_days?.toString() || '');
+      localStorage.setItem('is_trial', data.is_trial.toString());
+      localStorage.setItem('is_assinant', data.is_assinant.toString());
+      localStorage.setItem('expiration_date', data.expiration_date?.toString() || '');
     } catch (error) {
       console.error("Login failed", error);
       throw error;
@@ -90,16 +126,32 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     await authService.logout();
     setUser(null);
     setAccount(null);
+    setExpirationDays(null);
+    setIsTrial(false);
+    setIsAssinant(false);
+    setExpirationDate(null);
     setIsAuthenticated(false);
 
-    // Clear all cached data
-    localStorage.removeItem('logged_in');
-    localStorage.removeItem('user_data');
-    localStorage.removeItem('account_data');
+    localStorage.clear();
+  };
+
+  // Computed: check if subscription is expired
+  const isSubscriptionExpired = (expirationDays !== null && expirationDays <= 0 && !isAssinant);
+
+  // Update subscription status after successful checkout
+  const updateSubscriptionStatus = (newExpirationDays: number) => {
+    setIsAssinant(true);
+    setIsTrial(false);
+    setExpirationDays(newExpirationDays);
+
+    // Update localStorage
+    localStorage.setItem('is_assinant', 'true');
+    localStorage.setItem('is_trial', 'false');
+    localStorage.setItem('expiration_days', newExpirationDays.toString());
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, isLoading, login, logout, user, account }}>
+    <AuthContext.Provider value={{ isAuthenticated, isLoading, login, logout, user, account, expirationDays, isTrial, isAssinant, expirationDate, isSubscriptionExpired, updateSubscriptionStatus }}>
       {children}
     </AuthContext.Provider>
   );

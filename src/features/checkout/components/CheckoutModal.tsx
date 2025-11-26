@@ -1,5 +1,7 @@
 import React, { useState, type FormEvent } from 'react';
 import { CreditCard, Lock, ShieldCheck, X } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 import type { PlanModel, CreditCardModel } from '../types/Plan.model';
 import { CreditCard3D } from './CreditCard3D';
 
@@ -10,6 +12,8 @@ interface CheckoutModalProps {
 }
 
 export const CheckoutModal: React.FC<CheckoutModalProps> = ({ plan, isOpen, onClose }) => {
+  const navigate = useNavigate();
+  const { updateSubscriptionStatus } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [isFlipped, setIsFlipped] = useState(false);
   const [cardData, setCardData] = useState<CreditCardModel>({
@@ -66,10 +70,16 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ plan, isOpen, onCl
     setIsLoading(true);
 
     try {
-      // Mock successful checkout
       await new Promise((resolve) => setTimeout(resolve, 2000));
-      alert('Checkout realizado com sucesso! (Mock)');
+
+      updateSubscriptionStatus(30);
+
       onClose();
+      navigate('/dashboard');
+
+      setTimeout(() => {
+        alert('✅ Assinatura realizada com sucesso! Bem-vindo ao ' + plan.name);
+      }, 100);
     } catch (error) {
       console.error('Checkout error:', error);
       alert('Erro ao processar checkout. Por favor, tente novamente.');
