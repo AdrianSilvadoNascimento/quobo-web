@@ -1,9 +1,16 @@
-import React, { useState, type FormEvent } from 'react';
-import { CreditCard, Lock, ShieldCheck, X } from 'lucide-react';
+import React, { useEffect, useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
+
+import { CreditCard, Lock, ShieldCheck, X } from 'lucide-react';
+
 import { useAuth } from '@/contexts/AuthContext';
-import type { PlanModel, CreditCardModel } from '../types/Plan.model';
+import { useDebounce } from '@/hooks/useDebounce';
+
+import { PaymentIcon } from 'react-svg-credit-card-payment-icons';
+
+import { efiService } from '../services/efi.service';
 import { CreditCard3D } from './CreditCard3D';
+import { type PlanModel, CreditCardModel } from '../types/plan.model';
 
 interface CheckoutModalProps {
   plan: PlanModel;
@@ -15,15 +22,24 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ plan, isOpen, onCl
   const navigate = useNavigate();
   const { updateSubscriptionStatus } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+  const [isGeneratingToken, setIsGeneratingToken] = useState(false);
   const [isFlipped, setIsFlipped] = useState(false);
   const [cardData, setCardData] = useState<CreditCardModel>({
     card_number: '',
     card_holder_name: '',
+    holder_document: '',
     expiration_month: new Date().getMonth() + 1,
     expiration_year: new Date().getFullYear(),
     security_code: '',
-    cpf_cnpj: '',
+    brand: '',
   });
+
+  const debouncedCardData = useDebounce(cardData, 500);
+  const debouncedBrand = useDebounce(cardData.card_number, 150);
+
+  useEffect(() => {
+    efiService.checkScriptBlocking();
+  }, []);
 
   const handleInputChange = (field: keyof CreditCardModel, value: string | number) => {
     setCardData((prev) => ({ ...prev, [field]: value }));
@@ -61,9 +77,41 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ plan, isOpen, onCl
   const handleCPFCNPJChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/\D/g, '');
     if (value.length <= 14) {
-      handleInputChange('cpf_cnpj', value);
+      handleInputChange('holder_document', value);
     }
   };
+
+  useEffect(() => {
+    if (cardData.card_number.length < 6) return;
+
+    const fetchBrand = async () => {
+      cardData.brand = await efiService.identifyBrand(cardData.card_number);
+    }
+
+    fetchBrand();
+  }, [debouncedBrand]);
+
+  useEffect(() => {
+    if (!isFormValid()) return;
+
+    const card = {
+      card_number: debouncedCardData.card_number,
+      holder_name: debouncedCardData.card_holder_name,
+      expiration_month: String(debouncedCardData.expiration_month),
+      expiration_year: String(debouncedCardData.expiration_year),
+      security_code: debouncedCardData.security_code,
+      holder_document: debouncedCardData.holder_document,
+      brand: debouncedCardData.brand,
+    }
+
+    const generateToken = async () => {
+      setIsGeneratingToken(true);
+      await efiService.generateToken(card);
+      setIsGeneratingToken(false);
+    }
+
+    generateToken();
+  }, [debouncedCardData]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -86,6 +134,40 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ plan, isOpen, onCl
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const isFormValid = () => {
+    return (
+      cardData.card_number.length === 16 &&
+      cardData.card_holder_name.length > 0 &&
+      cardData.expiration_month > 0 &&
+      cardData.expiration_year > 0 &&
+      cardData.security_code.length === 3 &&
+      cardData.holder_document.length >= 11 &&
+      cardData.holder_document.length <= 14
+    );
+  };
+
+  const submitButton = () => {
+    let buttonLabel = 'Confirmar Assinatura'
+    if (isGeneratingToken) {
+      buttonLabel = 'Criptografando dados...'
+    } else if (isLoading) {
+      buttonLabel = 'Processando...'
+    }
+
+    return (
+      <>
+        {isLoading || isGeneratingToken ? (
+          <>
+            <span className="loading loading-spinner"></span>
+            {buttonLabel}
+          </>
+        ) : (
+          buttonLabel
+        )}
+      </>
+    );
   };
 
   if (!isOpen) return null;
@@ -111,20 +193,25 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ plan, isOpen, onCl
                 <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm mb-8">
                   <div className="flex justify-between items-start mb-2">
                     <div>
-                      <h4 className="font-bold text-lg text-slate-800">Plano {plan.name}</h4>
-                      <p className="text-sm text-slate-500">{plan.description}</p>
+                      {plan.name === 'Ouro' ? (
+                        <h4 className="font-bold bg-gradient-to-br from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 bg-clip-text text-transparent text-lg duration-150 transition-colors">Plano {plan.name}</h4>
+                      ) : (
+                        <h4 className="font-bold text-lg text-slate-800">Plano {plan.name}</h4>
+                      )}
+                      <p className="text-xs text-slate-500">{plan.description}</p>
                     </div>
                     <div className="text-right">
-                      <p className="font-bold text-xl text-brand-600">
-                        R$ {plan.value.toFixed(2)}
+                      <p className="font-bold text-xl text-brand-600 flex flex-row items-baseline gap-1">
+                        <span className="text-md text-slate-800">R$</span>
+                        <span className="text-2xl text-slate-800">{(plan.value / 100).toFixed(2).replace('.', ',')}</span>
+                        <span className="text-xs text-slate-400">/mês</span>
                       </p>
-                      <p className="text-xs text-slate-400">/mês</p>
                     </div>
                   </div>
                   <div className="divider my-2"></div>
                   <ul className="text-sm space-y-2 text-slate-600">
                     <li className="flex justify-between">
-                      <span>Produtos</span>
+                      <span>Limite de Produtos</span>
                       <span className="font-medium">
                         {plan.features.product_limits.unlimited
                           ? 'Ilimitados'
@@ -190,16 +277,24 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ plan, isOpen, onCl
                   <label className="label">
                     <span className="label-text font-medium text-slate-700">Número do Cartão</span>
                   </label>
-                  <input
-                    type="text"
-                    placeholder="0000 0000 0000 0000"
-                    className="input input-bordered w-full focus:input-primary transition-all"
-                    value={formatCardNumber(cardData.card_number)}
-                    onChange={handleCardNumberChange}
-                    onFocus={() => setIsFlipped(false)}
-                    required
-                    maxLength={19}
-                  />
+
+                  <div className="relative transition-all">
+                    <input
+                      type="text"
+                      placeholder="0000 0000 0000 0000"
+                      className="input input-bordered w-full focus:input-primary transition-all pr-12"
+                      value={formatCardNumber(cardData.card_number)}
+                      onChange={handleCardNumberChange}
+                      onFocus={() => setIsFlipped(false)}
+                      required
+                      maxLength={19}
+                    />
+                    {cardData.brand && cardData.card_number.length >= 16 && (
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center">
+                        <PaymentIcon type={efiService.normalizeBrand(cardData.brand)} format='flatRounded' />
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div className="form-control">
@@ -284,7 +379,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ plan, isOpen, onCl
                     type="text"
                     placeholder="000.000.000-00"
                     className="input input-bordered w-full focus:input-primary transition-all"
-                    value={formatCPFCNPJ(cardData.cpf_cnpj)}
+                    value={formatCPFCNPJ(cardData.holder_document)}
                     onChange={handleCPFCNPJChange}
                     onFocus={() => setIsFlipped(false)}
                     required
@@ -295,16 +390,9 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ plan, isOpen, onCl
                   <button
                     type="submit"
                     className="btn btn-primary btn-block h-12 text-lg shadow-lg shadow-brand-500/30 hover:shadow-brand-500/50 transition-all"
-                    disabled={isLoading}
+                    disabled={isLoading || isGeneratingToken}
                   >
-                    {isLoading ? (
-                      <>
-                        <span className="loading loading-spinner"></span>
-                        Processando...
-                      </>
-                    ) : (
-                      `Confirmar Assinatura`
-                    )}
+                    {submitButton()}
                   </button>
                   <p className="text-center text-xs text-slate-400 mt-4">
                     Ao confirmar, você concorda com nossos Termos de Uso e Política de Privacidade.

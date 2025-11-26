@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
-import { authService } from '../services/auth.service';
+import { authService } from '../features/auth/services/auth.service';
 import type { UserModel } from '@/features/account/types/user.model';
 import type { AccountModel } from '@/features/account/types/account.model';
 

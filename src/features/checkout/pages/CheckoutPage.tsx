@@ -1,8 +1,13 @@
 import React, { useState } from 'react';
-import { Check, Star, Shield, Zap, HelpCircle } from 'lucide-react';
-import type { PlanModel } from '../types/Plan.model';
-import { mockPlans } from '../services/mockPlans';
+import { useQuery } from '@tanstack/react-query';
+
+import { Check, Star, Shield, Zap, HelpCircle, Lightbulb } from 'lucide-react';
+
 import { CheckoutModal } from '../components/CheckoutModal';
+import type { PlanModel } from '@/features/checkout/types/plan.model';
+
+import { planService } from '../services/plan.service';
+
 import QuoboIcon from '@/assets/quobo-icon.svg';
 
 interface CheckoutPageProps {
@@ -12,6 +17,11 @@ interface CheckoutPageProps {
 export const CheckoutPage: React.FC<CheckoutPageProps> = ({ withHeader = false }) => {
   const [selectedPlan, setSelectedPlan] = useState<PlanModel | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const { data: plans = [], isLoading, isError } = useQuery({
+    queryKey: ['plan'],
+    queryFn: () => planService.getPlans(),
+  });
 
   const handleSelectPlan = (plan: PlanModel) => {
     setSelectedPlan(plan);
@@ -77,9 +87,10 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ withHeader = false }
 
         {/* Plan Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-20">
-          {mockPlans.map((plan) => {
-            const isPopular = plan.name === 'Prata';
-            const isPremium = plan.name === 'Ouro';
+          {plans.map((plan) => {
+            const isPopular = plan.name.includes('Prata');
+            const isPremium = plan.name.includes('Ouro');
+            const isSuggestion = plan.name.includes('Bronze');
 
             return (
               <div
@@ -108,6 +119,14 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ withHeader = false }
                   </div>
                 )}
 
+                {isSuggestion && (
+                  <div className="absolute -top-5 left-0 right-0 flex justify-center">
+                    <span className="bg-gradient-to-r from-amber-100 to-amber-50 text-slate-600 text-sm font-bold px-4 py-1 rounded-full shadow-lg flex items-center gap-1">
+                      <Lightbulb className="w-4 h-4 fill-current" /> Ideal para conhecer
+                    </span>
+                  </div>
+                )}
+
                 <div className={`p-8 rounded-t-2xl bg-gradient-to-b ${getPlanGradient(plan.name)}`}>
                   <h3 className="text-2xl font-bold text-slate-800 mb-2">{plan.name}</h3>
                   <p className="text-slate-600 min-h-[3rem] text-sm leading-relaxed">
@@ -117,9 +136,9 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ withHeader = false }
                   <div className="mt-6 flex items-baseline">
                     <span className="text-sm font-semibold text-slate-500">R$</span>
                     <span className="text-5xl font-extrabold text-slate-900 tracking-tight ml-1">
-                      {plan.value.toFixed(2).split('.')[0]}
+                      {(plan.value / 100).toFixed(2).split('.')[0]}
                     </span>
-                    <span className="text-2xl font-bold text-slate-700">,{plan.value.toFixed(2).split('.')[1]}</span>
+                    <span className="text-2xl font-bold text-slate-700">,{(plan.value / 100).toFixed(2).split('.')[1]}</span>
                     <span className="text-slate-500 ml-2">/mês</span>
                   </div>
                 </div>
@@ -140,14 +159,10 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ withHeader = false }
 
                   <button
                     onClick={() => handleSelectPlan(plan)}
-                    className={`w-full py-4 px-6 rounded-xl font-bold text-sm transition-all duration-200 transform active:scale-[0.98] ${getButtonColor(plan.name)}`}
+                    className={`btn btn-lg w-full py-4 px-6 rounded-xl font-bold text-sm transition-all duration-200 transform active:scale-[0.98] ${getButtonColor(plan.name)}`}
                   >
                     Escolher Plano {plan.name}
                   </button>
-
-                  <p className="text-center text-xs text-slate-400 mt-4">
-                    7 dias de garantia ou seu dinheiro de volta
-                  </p>
                 </div>
               </div>
             );

@@ -1,4 +1,4 @@
-import { PlanModel, type PlanFeaturesModel } from "./plan.model";
+import { PlanModel, type PlanFeaturesModel } from "@/features/checkout/types/plan.model";
 
 export class AccountModel {
   id!: string;

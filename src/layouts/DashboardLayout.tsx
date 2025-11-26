@@ -181,24 +181,28 @@ export const DashboardLayout: React.FC = () => {
           )}
 
           <div className="flex items-center gap-4">
-            <div className="text-xs text-slate-500 hidden sm:block text-right">
-              <p>
-                Plano <span className="font-semibold text-primary">
-                  {isTrial ? 'Trial' : isAssinant ? 'Premium' : 'Free'}
-                </span>
-              </p>
-              {expirationDays !== null && expirationDays > 0 && (
-                <p>Expira em {expirationDays} {expirationDays === 1 ? 'dia' : 'dias'}</p>
-              )}
-              {expirationDays !== null && expirationDays <= 0 && (
-                <p className="text-red-500 font-semibold">Expirado</p>
-              )}
-            </div>
-            <button
-              onClick={() => navigate('/checkout')}
-              className="btn btn-primary btn-sm bg-gradient-to-br from-[#22B8E6] via-[#2563EB] to-[#1E40AF] opacity-80 text-white text-xs font-bold rounded-full transition-colors hidden sm:block">
-              Fazer Upgrade
-            </button>
+            {isTrial && (
+              <>
+                <div className="text-xs text-slate-500 hidden sm:block text-right">
+                  <p>
+                    Plano <span className="font-semibold text-primary">
+                      {isTrial ? 'Trial' : isAssinant ? 'Premium' : 'Free'}
+                    </span>
+                  </p>
+                  {expirationDays !== null && expirationDays > 0 && (
+                    <p>Expira em {expirationDays} {expirationDays === 1 ? 'dia' : 'dias'}</p>
+                  )}
+                  {expirationDays !== null && expirationDays <= 0 && (
+                    <p className="text-red-500 font-semibold">Expirado</p>
+                  )}
+                </div>
+                <button
+                  onClick={() => navigate('/checkout')}
+                  className="btn btn-primary btn-sm bg-gradient-to-br from-[#22B8E6] via-[#2563EB] to-[#1E40AF] opacity-80 text-white text-xs font-bold rounded-full transition-colors hidden sm:block">
+                  Contratar
+                </button>
+              </>
+            )}
 
             <div className="h-8 w-[1px] bg-slate-200 mx-2 hidden sm:block"></div>
 

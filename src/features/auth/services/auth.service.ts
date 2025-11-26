@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { server } from './api';
+import { server } from '../../../services/api';
 
 import type { LoginResponseEntity } from '@/features/account/types/login_response.model';
 

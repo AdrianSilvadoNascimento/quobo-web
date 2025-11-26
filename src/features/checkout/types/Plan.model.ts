@@ -1,4 +1,31 @@
-// Plan model interfaces adapted from novo_egest_web
+export class PlanModel {
+  id!: string;
+  name!: string;
+  service!: string;
+  value!: number;
+  interval!: number;
+  repeats!: number;
+  description!: string;
+  currency!: string;
+  status!: string;
+  feature_list!: string[];
+  features!: PlanFeaturesModel;
+}
+
+export class CheckoutModel {
+  credit_card_token!: string;
+}
+
+export class CreditCardModel {
+  card_number!: string;
+  card_holder_name!: string;
+  holder_document!: string;
+  expiration_month!: number;
+  expiration_year!: number;
+  security_code!: string;
+  brand!: string;
+}
+
 export interface ProductLimits {
   max_products: number;
   unlimited: boolean;
@@ -41,7 +68,7 @@ export interface Support {
   phone_support: boolean;
 }
 
-export interface PlanFeatures {
+export interface PlanFeaturesModel {
   product_limits: ProductLimits;
   user_limits: UserLimits;
   team_features: TeamFeatures;
@@ -50,37 +77,4 @@ export interface PlanFeatures {
   import_features: ImportFeatures;
   reporting: Reporting;
   support: Support;
-}
-
-export interface PlanModel {
-  id: string;
-  name: string;
-  service: string;
-  value: number;
-  interval: number;
-  repeats: number;
-  description: string;
-  currency: string;
-  status: string;
-  feature_list: string[];
-  features: PlanFeatures;
-}
-
-export interface CreditCardModel {
-  card_number: string;
-  card_holder_name: string;
-  expiration_month: number;
-  expiration_year: number;
-  security_code: string;
-  cpf_cnpj: string;
-}
-
-export interface CheckoutRequest {
-  plan_id: string;
-  account_id: string;
-  credit_card_token: string;
-  card_mask: string;
-  expiration_date: string;
-  holder_document: string;
-  brand: string;
 }
