@@ -1,16 +1,20 @@
 import React, { useEffect, useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { CreditCard, Lock, ShieldCheck, X } from 'lucide-react';
+import { CreditCard, Lock, PartyPopper, ShieldCheck, X } from 'lucide-react';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useDebounce } from '@/hooks/useDebounce';
+import { AlertModal, type AlertType } from '@/components/AlertModal';
 
 import { PaymentIcon } from 'react-svg-credit-card-payment-icons';
+import confetti from 'canvas-confetti';
 
 import { efiService } from '../services/efi.service';
+import { planService } from '../services/plan.service';
 import { CreditCard3D } from './CreditCard3D';
 import { type PlanModel, CreditCardModel } from '../types/plan.model';
+import type { SubscriptionModel, AccountCardModel } from '@/features/account/types/account.model';
 
 interface CheckoutModalProps {
   plan: PlanModel;
@@ -20,8 +24,9 @@ interface CheckoutModalProps {
 
 export const CheckoutModal: React.FC<CheckoutModalProps> = ({ plan, isOpen, onClose }) => {
   const navigate = useNavigate();
-  const { updateSubscriptionStatus } = useAuth();
+  const { updateSubscriptionStatus, user, account } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+  const [isSuccessOpen, setIsSuccessOpen] = useState(false);
   const [isGeneratingToken, setIsGeneratingToken] = useState(false);
   const [isFlipped, setIsFlipped] = useState(false);
   const [cardData, setCardData] = useState<CreditCardModel>({
@@ -33,6 +38,25 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ plan, isOpen, onCl
     security_code: '',
     brand: '',
   });
+
+  const [paymentToken, setPaymentToken] = useState('');
+  const [cardMask, setCardMask] = useState('');
+
+  // Alert Modal State
+  const [alertModal, setAlertModal] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    type: 'info' as AlertType,
+  });
+
+  const showAlert = (title: string, message: string, type: AlertType = 'info') => {
+    setAlertModal({ isOpen: true, title, message, type });
+  };
+
+  const closeAlert = () => {
+    setAlertModal((prev) => ({ ...prev, isOpen: false }));
+  };
 
   const debouncedCardData = useDebounce(cardData, 500);
   const debouncedBrand = useDebounce(cardData.card_number, 150);
@@ -91,6 +115,18 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ plan, isOpen, onCl
     fetchBrand();
   }, [debouncedBrand]);
 
+  const isFormValid = () => {
+    return (
+      cardData.card_number.length === 16 &&
+      cardData.card_holder_name.length > 0 &&
+      cardData.expiration_month > 0 &&
+      cardData.expiration_year > 0 &&
+      cardData.security_code.length === 3 &&
+      cardData.holder_document.length >= 11 &&
+      cardData.holder_document.length <= 14
+    );
+  };
+
   useEffect(() => {
     if (!isFormValid()) return;
 
@@ -106,46 +142,103 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ plan, isOpen, onCl
 
     const generateToken = async () => {
       setIsGeneratingToken(true);
-      await efiService.generateToken(card);
+      const { token, card_mask } = await efiService.generateToken(card);
+      setPaymentToken(token);
+      setCardMask(card_mask);
       setIsGeneratingToken(false);
     }
 
     generateToken();
   }, [debouncedCardData]);
 
+  const triggerConfetti = () => {
+    const duration = 3 * 1000;
+    const animationEnd = Date.now() + duration;
+    const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 60 };
+
+    const randomInRange = (min: number, max: number) => {
+      return Math.random() * (max - min) + min;
+    }
+
+    const interval: any = setInterval(function () {
+      const timeLeft = animationEnd - Date.now();
+
+      if (timeLeft <= 0) {
+        return clearInterval(interval);
+      }
+
+      const particleCount = 50 * (timeLeft / duration);
+      // since particles fall down, start a bit higher than random
+      confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } });
+      confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } });
+    }, 250);
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      if (!paymentToken) {
+        showAlert(
+          'Erro no Token de Pagamento',
+          'Não foi possível gerar o token de pagamento. Por favor, verifique os dados do cartão e tente novamente.',
+          'error'
+        );
+        setIsLoading(false);
+        return;
+      }
 
-      updateSubscriptionStatus(30);
+      if (!user || !account) {
+        showAlert(
+          'Erro de Autenticação',
+          'Não foi possível identificar o usuário. Por favor, faça login novamente.',
+          'error'
+        );
+        setIsLoading(false);
+        return;
+      }
+
+      const subscriptionData: Partial<SubscriptionModel> = {
+        plan_id: plan.id,
+        account_id: account.id,
+        account_user_id: user.id,
+        credit_card_token: paymentToken,
+        card_mask: cardMask,
+        expiration_date: `${String(cardData.expiration_month).padStart(2, '0')}/${cardData.expiration_year}`,
+        brand: cardData.brand,
+        holder_document: cardData.holder_document,
+      };
+
+      const accountCardData: Partial<AccountCardModel> = {
+        card_token: paymentToken,
+        card_mask: cardMask,
+        expiration_date: `${String(cardData.expiration_month).padStart(2, '0')}/${cardData.expiration_year}` as any,
+        brand: cardData.brand,
+        account_id: account.id,
+        customer_document: cardData.holder_document,
+      };
+
+      await planService.createSubscription({
+        subscription: subscriptionData as SubscriptionModel,
+        card: accountCardData as AccountCardModel
+      });
 
       onClose();
-      navigate('/dashboard');
+      updateSubscriptionStatus();
 
-      setTimeout(() => {
-        alert('✅ Assinatura realizada com sucesso! Bem-vindo ao ' + plan.name);
-      }, 100);
+      setIsSuccessOpen(true);
+      triggerConfetti();
     } catch (error) {
       console.error('Checkout error:', error);
-      alert('Erro ao processar checkout. Por favor, tente novamente.');
+      showAlert(
+        'Erro no Processamento',
+        'Ocorreu um erro ao processar seu checkout. Por favor, verifique seus dados e tente novamente.',
+        'error'
+      );
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const isFormValid = () => {
-    return (
-      cardData.card_number.length === 16 &&
-      cardData.card_holder_name.length > 0 &&
-      cardData.expiration_month > 0 &&
-      cardData.expiration_year > 0 &&
-      cardData.security_code.length === 3 &&
-      cardData.holder_document.length >= 11 &&
-      cardData.holder_document.length <= 14
-    );
   };
 
   const submitButton = () => {
@@ -168,6 +261,10 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ plan, isOpen, onCl
         )}
       </>
     );
+  };
+
+  const handleGoToDashboard = () => {
+    navigate('/dashboard');
   };
 
   if (!isOpen) return null;
@@ -406,6 +503,41 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ plan, isOpen, onCl
           <button>close</button>
         </form>
       </div>
+
+      {/* --- Success Modal --- */}
+      {isSuccessOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center animate-in zoom-in-95 duration-300 relative overflow-hidden">
+            {/* Background Glow */}
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-40 h-40 bg-green-100 rounded-full blur-3xl -z-10 opacity-60"></div>
+
+            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner ring-4 ring-white">
+              <PartyPopper className="w-10 h-10 text-green-600" />
+            </div>
+
+            <h2 className="text-2xl font-bold text-slate-900 mb-2">Assinatura Confirmada!</h2>
+            <p className="text-slate-500 mb-8">
+              Parabéns! Você agora é um assinante <strong>{plan.name}</strong>. Aproveite todos os recursos desbloqueados.
+            </p>
+
+            <button
+              onClick={handleGoToDashboard}
+              className="w-full bg-gradient-to-br from-[#22B8E6] via-[#2563EB] to-[#1E40AF] text-white font-semibold py-3 rounded-xl transition-all shadow-lg"
+            >
+              Ir para o Dashboard
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Alert Modal */}
+      <AlertModal
+        isOpen={alertModal.isOpen}
+        onClose={closeAlert}
+        title={alertModal.title}
+        message={alertModal.message}
+        type={alertModal.type}
+      />
     </>
   );
 };

@@ -45,6 +45,7 @@ export type AccountType = typeof AccountType[keyof typeof AccountType];
 
 export class AccountCardModel {
   id!: string;
+  account_id!: string;
   card_token!: string;
   card_mask!: string;
   expiration_date!: Date;

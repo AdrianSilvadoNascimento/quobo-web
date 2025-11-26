@@ -15,7 +15,7 @@ interface AuthContextType {
   isAssinant: boolean;
   expirationDate: Date | null;
   isSubscriptionExpired: boolean;
-  updateSubscriptionStatus: (expirationDays: number) => void;
+  updateSubscriptionStatus: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -134,20 +134,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     localStorage.clear();
   };
-
   // Computed: check if subscription is expired
   const isSubscriptionExpired = (expirationDays !== null && expirationDays <= 0 && !isAssinant);
 
   // Update subscription status after successful checkout
-  const updateSubscriptionStatus = (newExpirationDays: number) => {
-    setIsAssinant(true);
-    setIsTrial(false);
-    setExpirationDays(newExpirationDays);
-
-    // Update localStorage
-    localStorage.setItem('is_assinant', 'true');
-    localStorage.setItem('is_trial', 'false');
-    localStorage.setItem('expiration_days', newExpirationDays.toString());
+  const updateSubscriptionStatus = () => {
+    refreshUser();
   };
 
   return (
