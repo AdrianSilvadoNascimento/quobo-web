@@ -224,18 +224,37 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ plan, isOpen, onCl
         card: accountCardData as AccountCardModel
       });
 
-      onClose();
+      // Update subscription status before showing success
       updateSubscriptionStatus();
 
+      // Show success modal and confetti
       setIsSuccessOpen(true);
       triggerConfetti();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Checkout error:', error);
-      showAlert(
-        'Erro no Processamento',
-        'Ocorreu um erro ao processar seu checkout. Por favor, verifique seus dados e tente novamente.',
-        'error'
-      );
+
+      // Extract error message from API response
+      let errorTitle = 'Erro no Processamento';
+      let errorMessage = 'Ocorreu um erro ao processar seu checkout. Por favor, verifique seus dados e tente novamente.';
+
+      if (error?.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+
+      // Check for specific error types
+      if (error?.response?.status === 400) {
+        errorTitle = 'Dados Inválidos';
+      } else if (error?.response?.status === 401) {
+        errorTitle = 'Não Autorizado';
+        errorMessage = 'Sua sessão expirou. Por favor, faça login novamente.';
+      } else if (error?.response?.status === 500) {
+        errorTitle = 'Erro no Servidor';
+        errorMessage = 'Ocorreu um erro no servidor. Por favor, tente novamente em alguns instantes.';
+      }
+
+      showAlert(errorTitle, errorMessage, 'error');
     } finally {
       setIsLoading(false);
     }
@@ -264,6 +283,8 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ plan, isOpen, onCl
   };
 
   const handleGoToDashboard = () => {
+    setIsSuccessOpen(false);
+    onClose();
     navigate('/dashboard');
   };
 
