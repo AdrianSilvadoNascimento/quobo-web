@@ -42,6 +42,15 @@ export class AuthService {
     }
   }
 
+  async register(params: any) {
+    try {
+      const { data } = await server.api.post('/auth/register', params);
+      return data;
+    } catch (error) {
+      throw error;
+    }
+  }
+
   async logout() {
     try {
       await server.api.post('/auth/logout');

@@ -269,9 +269,9 @@ export const LoginPage: React.FC = () => {
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-blue-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               </button>
             </form>
-            <div className="divider">ou</div>
+            {/* <div className="divider">ou</div> */}
             {/* Google Sign In */}
-            <button className="cursor-pointer w-full bg-white border-2 border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold py-3.5 rounded-md shadow-sm hover:shadow-md flex items-center justify-center gap-3 transition-all duration-300 transform hover:scale-[1.02] active:scale-95 group">
+            {/* <button className="cursor-pointer w-full bg-white border-2 border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold py-3.5 rounded-md shadow-sm hover:shadow-md flex items-center justify-center gap-3 transition-all duration-300 transform hover:scale-[1.02] active:scale-95 group">
               <svg className="w-5 h-5 transition-transform duration-300 group-hover:scale-110" viewBox="0 0 24 24">
                 <path
                   d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -291,7 +291,7 @@ export const LoginPage: React.FC = () => {
                 />
               </svg>
               <span>Continuar com Google</span>
-            </button>
+            </button> */}
           </div>
         </div>
 

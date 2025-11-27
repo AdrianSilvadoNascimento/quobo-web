@@ -3,6 +3,7 @@ import { useOnboarding } from '../contexts/OnboardingContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { viaCepService, type ViaCepResponse } from '../services/viacep.service';
 import { onboardingService, type CompleteOnboardingRequest } from '../services/onboarding.service';
+import { AlertModal, type AlertType } from '@/components/AlertModal';
 
 interface FormData {
   // Account
@@ -46,6 +47,12 @@ export const OnboardingForm: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [currentStep, setCurrentStep] = useState(1);
+  const [alert, setAlert] = useState<{ isOpen: boolean; title: string; message: string; type: AlertType }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    type: 'info'
+  });
 
   const handleCepChange = async (cep: string) => {
     const cleanCep = cep.replace(/\D/g, '');
@@ -195,7 +202,12 @@ export const OnboardingForm: React.FC = () => {
     if (!validateStep2()) return;
 
     if (!user || !account) {
-      alert('Erro: dados do usuário não encontrados');
+      setAlert({
+        isOpen: true,
+        title: 'Erro',
+        message: 'Dados do usuário não encontrados',
+        type: 'error'
+      });
       return;
     }
 
@@ -207,9 +219,9 @@ export const OnboardingForm: React.FC = () => {
         account_id: account.id,
         name: formData.name,
         cpf_cnpj: formData.cpf_cnpj.replace(/\D/g, ''),
-        phone_number: formData.phone_number.replace(/\D/g, ''), // Remove formatting
+        phone_number: formatPhone(formData.phone_number), // Send formatted
         birth: formData.birth,
-        postal_code: formData.postal_code.replace(/\D/g, ''), // Remove hyphen
+        postal_code: formData.postal_code, // Send formatted
         street: formData.street,
         house_number: formData.no_house_number ? undefined : formData.house_number,
         neighborhood: formData.neighborhood,
@@ -229,7 +241,12 @@ export const OnboardingForm: React.FC = () => {
       await checkOnboarding();
     } catch (error: any) {
       console.error('Error completing onboarding:', error);
-      alert(error.response?.data?.message || 'Erro ao completar cadastro');
+      setAlert({
+        isOpen: true,
+        title: 'Erro',
+        message: error.response?.data?.message || 'Erro ao completar cadastro',
+        type: 'error'
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -237,6 +254,13 @@ export const OnboardingForm: React.FC = () => {
 
   return (
     <div className="w-full max-w-2xl mx-auto p-6">
+      <AlertModal
+        isOpen={alert.isOpen}
+        onClose={() => setAlert(prev => ({ ...prev, isOpen: false }))}
+        title={alert.title}
+        message={alert.message}
+        type={alert.type}
+      />
       {/* Progress Indicator */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
