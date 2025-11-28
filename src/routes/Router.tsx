@@ -8,7 +8,8 @@ import { DashboardPage } from '../features/dashboard/pages/DashboardPage';
 import { MovementsPage } from '../features/movements/pages/MovementsPage';
 import { CustomersPage } from '../features/customers/pages/CustomersPage';
 import { DashboardLayout } from '../layouts/DashboardLayout';
-import { ItemsPage } from '../features/itens/pages/ItemsPage';
+import { ItemsPage } from '../features/items/pages/ItemsPage';
+import { ItemForm } from '../features/items/pages/ItemForm';
 import { CategoriesPage } from '../features/categories/pages/CategoriesPage';
 import { AccountLayout } from '@/features/account/layouts/AccountLayout';
 import { ProfilePage } from '@/features/account/pages/ProfilePage';
@@ -38,6 +39,8 @@ export const Router: React.FC = () => {
           <Route element={<DashboardLayout />}>
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/products" element={<ItemsPage />} />
+            <Route path="/products/new" element={<ItemForm />} />
+            <Route path="/products/:id" element={<ItemForm />} />
             <Route path="/movements" element={<MovementsPage />} />
             <Route path="/customers" element={<CustomersPage />} />
             <Route path="/categories" element={<CategoriesPage />} />
