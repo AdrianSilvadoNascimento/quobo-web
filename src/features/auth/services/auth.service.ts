@@ -1,20 +1,12 @@
-import axios from 'axios';
 import { server } from '../../../services/api';
-
 import type { LoginResponseEntity } from '@/features/account/types/login_response.model';
 
 export class AuthService {
-  // Access token stored in memory only
   accessToken: string | null = null;
-
-  // Flag to prevent multiple simultaneous refresh requests
   isRefreshing: boolean = false;
-
-  // Queue of pending requests waiting for token refresh
   refreshQueue: ((token?: string) => void)[] = [];
 
-  constructor() {
-  }
+  constructor() { }
 
   /**
    * Check if user has an active access token
@@ -35,7 +27,11 @@ export class AuthService {
   async login(params: { email: string; password: string; remember?: boolean }) {
     try {
       const { email, password, remember } = params;
-      const { data } = await server.api.post<LoginResponseEntity>('/auth/login', { email, password, remember });
+      const { data } = await server.api.post<LoginResponseEntity>(
+        '/auth/login',
+        { email, password, remember },
+        { withCredentials: true }
+      );
       return data;
     } catch (error) {
       throw error;
@@ -53,16 +49,46 @@ export class AuthService {
 
   async logout() {
     try {
-      await server.api.post('/auth/logout');
+      await server.api.post('/auth/logout', {}, { withCredentials: true });
       this.setAccessToken(null);
     } catch (error) {
       console.error('Logout failed', error);
+      this.setAccessToken(null);
     }
   }
 
+  /**
+   * Restaura a sessão ao inicializar a aplicação
+   * Usa o refresh_token do cookie para obter um novo access_token
+   */
+  async restoreSession() {
+    try {
+      const { data } = await server.api.post<LoginResponseEntity>(
+        '/auth/refresh',
+        {},
+        { withCredentials: true }
+      );
+      return data;
+    } catch (error) {
+      console.error('Session restoration failed', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Renova o access_token quando ele expira (chamado pelo interceptor)
+   */
   async refreshTokenRequest() {
-    const { data } = await axios.post<LoginResponseEntity>(`${server.baseURL}/auth/refresh`, {}, { withCredentials: true });
-    return data;
+    try {
+      const { data } = await server.api.post<LoginResponseEntity>(
+        '/auth/refresh',
+        {},
+        { withCredentials: true }
+      );
+      return data;
+    } catch (error) {
+      throw error;
+    }
   }
 }
 
@@ -82,6 +108,10 @@ server.api.interceptors.response.use(
   res => res,
   async err => {
     const original = err.config;
+
+    if (original.url?.includes('/auth/refresh')) {
+      return Promise.reject(err);
+    }
 
     if (err.response?.status === 401 && !original._retry) {
       original._retry = true;
@@ -103,10 +133,10 @@ server.api.interceptors.response.use(
 
       try {
         const data = await authService.refreshTokenRequest();
-        const { token } = data;
+        const { token } = data!;
+
 
         authService.setAccessToken(token);
-
         authService.processQueue(token);
 
         original.headers.Authorization = `${server.tokenPrefix} ${token}`;
@@ -114,6 +144,10 @@ server.api.interceptors.response.use(
       } catch (error) {
         authService.processQueue(undefined);
         authService.setAccessToken(null);
+
+        localStorage.clear();
+        window.location.href = '/login';
+
         return Promise.reject(error);
       } finally {
         authService.isRefreshing = false;

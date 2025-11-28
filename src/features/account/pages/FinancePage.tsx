@@ -1,7 +1,75 @@
-import React from 'react';
+import React, { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { CreditCard, Download, Clock, CheckCircle, Calendar } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { accountApi } from '@/services/accountApi';
 
 export const FinancePage: React.FC = () => {
+  const { account } = useAuth();
+  const accountId = account?.id;
+
+  const { data: financeData, isLoading, error } = useQuery({
+    queryKey: ['finance', accountId],
+    queryFn: () => accountApi.getFinanceData(accountId!),
+    enabled: !!accountId,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const formattedSubscription = useMemo(() => {
+    if (!financeData?.subscription) return null;
+
+    const sub = financeData.subscription;
+    const expirationDate = sub.is_trial && sub.expiration_trial
+      ? new Date(sub.expiration_trial)
+      : sub.next_renewal
+        ? new Date(sub.next_renewal)
+        : null;
+
+    const daysUntilExpiry = expirationDate
+      ? Math.ceil((expirationDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+      : null;
+
+    return {
+      ...sub,
+      renewalDateFormatted: expirationDate?.toLocaleDateString('pt-BR'),
+      planValueFormatted: sub.plan_value
+        ? `R$ ${(sub.plan_value / 100).toFixed(2).replace('.', ',')}`
+        : 'R$ 0,00',
+      daysUntilExpiry,
+    };
+  }, [financeData?.subscription]);
+
+  const formattedInvoices = useMemo(() => {
+    if (!financeData?.invoices) return [];
+
+    return financeData.invoices.map(invoice => ({
+      ...invoice,
+      dateFormatted: new Date(invoice.created_at).toLocaleDateString('pt-BR'),
+      amountFormatted: `R$ ${(invoice.value / 100).toFixed(2).replace('.', ',')}`,
+      statusLabel: invoice.status === 'paid' ? 'Pago' : 'Pendente',
+    }));
+  }, [financeData?.invoices]);
+
+  if (isLoading) {
+    return (
+      <div className="max-w-5xl mx-auto space-y-8">
+        <div className="flex items-center justify-center h-64">
+          <div className="loading loading-spinner loading-lg text-primary"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-5xl mx-auto space-y-8">
+        <div className="alert alert-error">
+          <span>Erro ao carregar dados financeiros. Tente novamente.</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-5xl mx-auto space-y-8">
 
@@ -17,28 +85,50 @@ export const FinancePage: React.FC = () => {
               <span className="text-2xl">⚡</span>
             </div>
             <div className="flex-1">
-              <h4 className="text-xl font-bold text-slate-800">Plano Free</h4>
+              <h4 className="text-xl font-bold text-slate-800">
+                {formattedSubscription?.plan_name || 'Plano Free'}
+              </h4>
               <p className="text-slate-500 text-sm mt-1">
-                Período de teste - Expira em <span className="text-orange-600 font-semibold">2 dias</span>
+                {formattedSubscription?.is_expired ? (
+                  <span className="text-red-600 font-semibold">Expirado</span>
+                ) : formattedSubscription?.daysUntilExpiry !== null && formattedSubscription?.daysUntilExpiry !== undefined ? (
+                  <>
+                    {formattedSubscription?.is_trial ? 'Período de teste' : 'Ativo'} - Expira em <span className="text-orange-600 font-semibold">{formattedSubscription.daysUntilExpiry} dias</span>
+                  </>
+                ) : (
+                  'Ativo'
+                )}
               </p>
               <div className="mt-4 flex flex-wrap gap-4 text-sm text-slate-600">
-                <div className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-slate-400" />
-                  <span>Renovação: <strong>31/12/2029</strong></span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <CreditCard className="w-4 h-4 text-slate-400" />
-                  <span>Valor: <strong>R$ 0,00</strong>/mês</span>
-                </div>
+                {formattedSubscription?.renewalDateFormatted && (
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-slate-400" />
+                    <span>{formattedSubscription.is_trial ? 'Expiração' : 'Renovação'}: <strong>{formattedSubscription.renewalDateFormatted}</strong></span>
+                  </div>
+                )}
+                {formattedSubscription?.is_trial ?
+                  (
+                    <div className="flex items-center gap-2">
+                      <Calendar className="w-4 h-4 text-slate-400" />
+                      <span>Período de teste</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <CreditCard className="w-4 h-4 text-slate-400" />
+                      <span>Valor: <strong>{formattedSubscription?.planValueFormatted || 'R$ 0,00'}</strong>/mês</span>
+                    </div>
+                  )}
               </div>
             </div>
             <div className="flex flex-col gap-2 min-w-[180px]">
               <button className="btn btn-primary btn-sm bg-gradient-to-br from-[#22B8E6] via-[#2563EB] to-[#1E40AF] opacity-80 text-white text-xs font-bold rounded-full transition-colors hidden sm:block">
-                Fazer Upgrade
+                {formattedSubscription?.is_trial ? 'Contratar Assinatura' : 'Fazer Upgrade'}
               </button>
-              <button className="w-full bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 font-medium py-2 px-4 rounded-lg transition-colors text-sm">
-                Cancelar Assinatura
-              </button>
+              {!formattedSubscription?.is_trial && (
+                <button className="btn text-red-600 w-full bg-white border border-red-200 hover:bg-slate-50 font-medium py-2 px-4 transition-colors">
+                  Cancelar Assinatura
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -49,16 +139,24 @@ export const FinancePage: React.FC = () => {
         <section>
           <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wide mb-3">Método de Pagamento</h3>
           <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 bg-white rounded-lg border border-slate-200 flex items-center justify-center shadow-sm">
-                <CreditCard className="w-5 h-5 text-slate-600" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-slate-800">Mastercard final 8832</p>
-                <p className="text-xs text-slate-500">Expira em 10/2028</p>
-              </div>
-            </div>
-            <button className="text-brand-600 text-sm font-medium hover:underline">Alterar</button>
+            {financeData?.paymentMethod ? (
+              <>
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 bg-white rounded-lg border border-slate-200 flex items-center justify-center shadow-sm">
+                    <CreditCard className="w-5 h-5 text-slate-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-slate-800">
+                      {financeData.paymentMethod.brand} final {financeData.paymentMethod.card_mask?.slice(-4)}
+                    </p>
+                    <p className="text-xs text-slate-500">Expira em {financeData.paymentMethod.expiration_date}</p>
+                  </div>
+                </div>
+                <button className="text-brand-600 text-sm font-medium hover:underline">Alterar</button>
+              </>
+            ) : (
+              <p className="text-sm text-slate-500">Nenhum cartão cadastrado</p>
+            )}
           </div>
         </section>
 
@@ -67,9 +165,13 @@ export const FinancePage: React.FC = () => {
           <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wide mb-3">Dados de Cobrança</h3>
           <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 flex items-center justify-between">
             <div>
-              <p className="text-sm font-semibold text-slate-800">Quobo Tecnologia Ltda</p>
-              <p className="text-xs text-slate-500">CNPJ: 00.000.000/0001-00</p>
-              <p className="text-xs text-slate-500">Rua da Tecnologia, 123 - SP</p>
+              <p className="text-sm font-semibold text-slate-800">{financeData?.billingInfo.name}</p>
+              <p className="text-xs text-slate-500">CPF/CNPJ: {financeData?.billingInfo.cpf_cnpj}</p>
+              {financeData?.billingInfo.street && (
+                <p className="text-xs text-slate-500">
+                  {financeData.billingInfo.street}, {financeData.billingInfo.house_number} - {financeData.billingInfo.city}/{financeData.billingInfo.state}
+                </p>
+              )}
             </div>
             <button className="text-brand-600 text-sm font-medium hover:underline">Editar</button>
           </div>
@@ -92,40 +194,46 @@ export const FinancePage: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {[
-                  { date: '17/10/2025', plan: 'Plano Free (Trial)', amount: 'R$ 0,00', status: 'paid' },
-                  { date: '17/09/2025', plan: 'Plano Bronze', amount: 'R$ 29,90', status: 'paid' },
-                  { date: '17/08/2025', plan: 'Plano Bronze', amount: 'R$ 29,90', status: 'pending' },
-                ].map((invoice, i) => (
-                  <tr key={i} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-6 py-4 font-medium text-slate-800">{invoice.date}</td>
-                    <td className="px-6 py-4">{invoice.plan}</td>
-                    <td className="px-6 py-4">{invoice.amount}</td>
-                    <td className="px-6 py-4 text-center">
-                      {invoice.status === 'paid' ? (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-100">
-                          <CheckCircle className="w-3 h-3" /> Pago
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-50 text-orange-700 border border-orange-100">
-                          <Clock className="w-3 h-3" /> Pendente
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <button className="inline-flex items-center gap-1 text-slate-400 hover:text-brand-600 transition-colors">
-                        <Download className="w-4 h-4" />
-                        <span className="hidden sm:inline">PDF</span>
-                      </button>
+                {formattedInvoices.length > 0 ? (
+                  formattedInvoices.map((invoice) => (
+                    <tr key={invoice.id} className="hover:bg-slate-50 transition-colors">
+                      <td className="px-6 py-4 font-medium text-slate-800">{invoice.dateFormatted}</td>
+                      <td className="px-6 py-4">{invoice.plan_name}</td>
+                      <td className="px-6 py-4">{invoice.amountFormatted}</td>
+                      <td className="px-6 py-4 text-center">
+                        {invoice.status === 'paid' ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-100">
+                            <CheckCircle className="w-3 h-3" /> Pago
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-50 text-orange-700 border border-orange-100">
+                            <Clock className="w-3 h-3" /> Pendente
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <button className="inline-flex items-center gap-1 text-slate-400 hover:text-brand-600 transition-colors">
+                          <Download className="w-4 h-4" />
+                          <span className="hidden sm:inline">PDF</span>
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-8 text-center text-slate-500">
+                      Nenhuma fatura encontrada
                     </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>
-          <div className="p-4 border-t border-slate-100 bg-slate-50 text-center text-xs text-slate-500">
-            Mostrando as últimas 3 faturas. <button className="text-brand-600 hover:underline">Ver todas</button>
-          </div>
+          {formattedInvoices.length > 0 && (
+            <div className="p-4 border-t border-slate-100 bg-slate-50 text-center text-xs text-slate-500">
+              Mostrando as últimas {formattedInvoices.length} faturas. <button className="text-brand-600 hover:underline">Ver todas</button>
+            </div>
+          )}
         </div>
       </section>
     </div>

@@ -28,12 +28,12 @@ export interface CompleteOnboardingRequest {
 
 class OnboardingService {
   async checkOnboardingStatus(): Promise<OnboardingStatusResponse> {
-    const response = await server.api.get<OnboardingStatusResponse>(`/onboarding/status`);
+    const response = await server.api.get<OnboardingStatusResponse>(`/onboarding/status`, { withCredentials: true });
     return response.data;
   }
 
   async completeOnboarding(data: CompleteOnboardingRequest): Promise<{ message: string }> {
-    const response = await server.api.post<{ message: string }>(`/onboarding/complete`, data);
+    const response = await server.api.post<{ message: string }>(`/onboarding/complete`, data, { withCredentials: true });
     return response.data;
   }
 }

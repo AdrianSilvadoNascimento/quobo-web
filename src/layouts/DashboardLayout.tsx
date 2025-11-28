@@ -21,7 +21,7 @@ import {
 import QuoboIcon from '@/assets/quobo-icon.svg';
 
 export const DashboardLayout: React.FC = () => {
-  const { logout, user, expirationDays, isTrial, isAssinant, isSubscriptionExpired } = useAuth();
+  const { logout, user, expirationDays, isTrial, subscription, isSubscriptionExpired } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
   const [toggled, setToggled] = useState(false);
   const [modalDismissed, setModalDismissed] = useState(false);
@@ -38,14 +38,12 @@ export const DashboardLayout: React.FC = () => {
 
   const isActive = (path: string) => location.pathname === path;
 
-  // Route protection: redirect to checkout if subscription expired
   useEffect(() => {
     if (isSubscriptionExpired && location.pathname !== '/checkout') {
       navigate('/checkout', { replace: true });
     }
   }, [isSubscriptionExpired, location.pathname, navigate]);
 
-  // Collapse sidebar when subscription is expired
   useEffect(() => {
     if (isSubscriptionExpired) {
       setCollapsed(true);
@@ -186,7 +184,7 @@ export const DashboardLayout: React.FC = () => {
                 <div className="text-xs text-slate-500 hidden sm:block text-right">
                   <p>
                     Plano <span className="font-semibold text-primary">
-                      {isTrial ? 'Trial' : isAssinant ? 'Premium' : 'Free'}
+                      {subscription?.plan?.name}
                     </span>
                   </p>
                   {expirationDays !== null && expirationDays > 0 && (
