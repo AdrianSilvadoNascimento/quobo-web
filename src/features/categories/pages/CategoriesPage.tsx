@@ -140,7 +140,7 @@ export const CategoriesPage: React.FC = () => {
         </button>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+      <div className="bg-white rounded-xl shadow-sm border border-slate-100">
         {/* Toolbar */}
         <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row gap-4 justify-between">
           <div className="relative flex-1 max-w-md">

@@ -1,41 +1,12 @@
 import { ItemModel } from "@/features/items/types/item.model";
-import { PaginatedResponse } from "../../../utils/paginated_response.model";
+import { UtilsService } from "@/utils/utils_service";
+
 import { server } from '../../../services/api';
 
 export class ItemService {
-  private async request<T>(
-    endpoint: string,
-    next: number,
-    limit: number
-  ): Promise<PaginatedResponse<T>> {
-    try {
-      const url = `/${endpoint}/paginated?offset=${next}&limit=${limit}`
-      const response = await server.api.get(
-        url,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-
-      if (![200, 201].includes(response.status)) throw new Error('Erro ao buscar dados');
-
-      const data = await response.data;
-      return {
-        data: data.data,
-        total: data.total,
-        next: data.next,
-      };
-    } catch (error) {
-      console.error('API Error:', error);
-      throw error;
-    }
-  }
-
   async getProducts(account_id: string, page: number, limit: number) {
     const offset = page * limit;
-    return this.request<ItemModel>(`item/${account_id}`, offset, limit);
+    return UtilsService.requestPaginated<ItemModel>(`item/${account_id}`, offset, limit);
   }
 
   async getItem(account_id: string, item_id: string): Promise<ItemModel> {

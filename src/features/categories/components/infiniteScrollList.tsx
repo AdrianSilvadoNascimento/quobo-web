@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { MoreHorizontal, Tags, Edit, Trash2 } from 'lucide-react';
 import { CategoryModel } from '../types/category.model';
 import Empty from '@/components/ui/Empty';
+import { UtilsService } from '@/utils/utils_service';
 
 interface InfiniteScrollListProps {
   categories: CategoryModel[];
@@ -23,15 +24,6 @@ export const InfiniteScrollList: React.FC<InfiniteScrollListProps> = ({
   const observerTarget = useRef<HTMLDivElement>(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<CategoryModel | null>(null);
-
-  const sanitizeDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('pt-BR', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-    });
-  };
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -82,7 +74,7 @@ export const InfiniteScrollList: React.FC<InfiniteScrollListProps> = ({
   }
 
   return (
-    <div className="overflow-visible">
+    <div>
       <table className="w-full text-left text-sm text-slate-600">
         <thead className="bg-slate-50 text-xs uppercase font-semibold text-slate-500">
           <tr>
@@ -102,12 +94,12 @@ export const InfiniteScrollList: React.FC<InfiniteScrollListProps> = ({
               </td>
               <td className="px-6 py-4">
                 <span className="flex-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-800">
-                  {sanitizeDate(category.created_at)}
+                  {UtilsService.sanitizeDate(category.created_at)}
                 </span>
               </td>
               <td className="px-6 py-4">
                 <span className="flex-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-800">
-                  {sanitizeDate(category.updated_at)}
+                  {UtilsService.sanitizeDate(category.updated_at)}
                 </span>
               </td>
               <td className="px-6 py-4 text-right">

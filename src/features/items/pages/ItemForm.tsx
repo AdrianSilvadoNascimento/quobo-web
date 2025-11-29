@@ -20,6 +20,7 @@ import { CategoryModel } from '@/features/categories/types/category.model';
 import { UnitOfMeasureModel } from '../types/unity_of_measure.model';
 import { ItemModel } from '../types/item.model';
 import EmptyCategoryModal from '../components/EmptyCategoriesModal';
+import { AlertModal, type AlertType } from '@/components/AlertModal';
 
 export const ItemForm: React.FC = () => {
   const navigate = useNavigate();
@@ -34,6 +35,22 @@ export const ItemForm: React.FC = () => {
   const [units, setUnits] = useState<UnitOfMeasureModel[]>([]);
 
   const [openEmptyCategoryModal, setOpenEmptyCategoryModal] = useState(false);
+
+  // Alert Modal State
+  const [alertModal, setAlertModal] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    type: 'info' as AlertType,
+  });
+
+  const showAlert = (title: string, message: string, type: AlertType = 'info') => {
+    setAlertModal({ isOpen: true, title, message, type });
+  };
+
+  const closeAlert = () => {
+    setAlertModal((prev) => ({ ...prev, isOpen: false }));
+  };
 
   // Form State
   const [formData, setFormData] = useState({
@@ -86,7 +103,7 @@ export const ItemForm: React.FC = () => {
         }
       } catch (error) {
         console.error('Error loading data:', error);
-        // TODO: Show error toast
+        showAlert('Erro ao carregar dados', 'Não foi possível carregar as informações do produto.', 'error');
       } finally {
         setIsFetching(false);
       }
@@ -162,7 +179,7 @@ export const ItemForm: React.FC = () => {
       navigate('/products');
     } catch (error) {
       console.error('Error saving item:', error);
-      alert('Erro ao salvar produto');
+      showAlert('Erro ao salvar produto', 'Verifique os dados e tente novamente.', 'error');
     } finally {
       setIsLoading(false);
     }
@@ -189,11 +206,19 @@ export const ItemForm: React.FC = () => {
 
   return (
     <div className="max-w-5xl mx-auto pb-10">
+      <AlertModal
+        isOpen={alertModal.isOpen}
+        onClose={closeAlert}
+        title={alertModal.title}
+        message={alertModal.message}
+        type={alertModal.type}
+      />
+
       {/* Header */}
       <div className="flex items-center gap-4 mb-8">
         <button
           onClick={() => navigate('/products')}
-          className="btn bg-slate-50 hover:bg-slate-100 rounded-lg text-slate-500 transition-colors"
+          className="cursor-pointer p-2 hover:bg-slate-100 rounded-full transition-colors"
         >
           <ArrowLeft className="w-6 h-6" />
         </button>

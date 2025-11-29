@@ -15,6 +15,7 @@ import { AccountLayout } from '@/features/account/layouts/AccountLayout';
 import { ProfilePage } from '@/features/account/pages/ProfilePage';
 import { FinancePage } from '@/features/account/pages/FinancePage';
 import { CheckoutPage } from '@/features/checkout/pages/CheckoutPage';
+import CustomerForm from '@/features/customers/pages/CustomerForm';
 
 export const Router: React.FC = () => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -38,11 +39,17 @@ export const Router: React.FC = () => {
         isAuthenticated ? (
           <Route element={<DashboardLayout />}>
             <Route path="/dashboard" element={<DashboardPage />} />
+
             <Route path="/products" element={<ItemsPage />} />
             <Route path="/products/new" element={<ItemForm />} />
             <Route path="/products/:id" element={<ItemForm />} />
+
             <Route path="/movements" element={<MovementsPage />} />
+
             <Route path="/customers" element={<CustomersPage />} />
+            <Route path="/customers/new" element={<CustomerForm />} />
+            <Route path="/customers/:id" element={<CustomerForm />} />
+
             <Route path="/categories" element={<CategoriesPage />} />
 
             {/* Checkout/Plans Routes */}

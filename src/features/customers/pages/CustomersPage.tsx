@@ -1,69 +1,196 @@
-import React from 'react';
-import { UserPlus, Search, Mail, Phone, MapPin, MoreVertical } from 'lucide-react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { UserPlus, Search, Users, X, SlidersHorizontal, Filter, ChevronDown } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { useDebounce } from '@/hooks/useDebounce';
+import { useNavigate } from 'react-router-dom';
+
+import { customer_service } from '../services/customer.service';
+
+import { CustomerModel, type CustomerType } from '../types/customer.model';
+import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
+import InfiniteCards from '../components/InfiniteCards';
+
+interface CustomerTypeProp {
+  value: string;
+  label: string;
+}
 
 export const CustomersPage: React.FC = () => {
+  const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [customerType, setCustomerType] = useState<CustomerTypeProp>({ value: '', label: 'Todos os Tipos' });
+  const [searchResults, setSearchResults] = useState<CustomerModel[] | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const customerTypes: CustomerTypeProp[] = [
+    { value: 'PERSON', label: 'Pessoa Física' },
+    { value: 'COMPANY', label: 'Pessoa Jurídica' },
+  ]
+
+  const debouncedSearchTerm = useDebounce(searchQuery, 200);
+
+  const { account } = useAuth();
+
+  const fetchProducts = useCallback((account_id: string, page: number, limit: number) => {
+    return customer_service.getPaginatedCustomers(account_id, page, limit)
+  }, [])
+
+  const {
+    data: customers,
+    loading,
+    hasMore,
+    loadMore,
+    refresh,
+  } = useInfiniteScroll<CustomerModel>({
+    fetchFunction: fetchProducts,
+    limit: 40,
+    account_id: account?.id
+  });
+
+  const filteredCustomers = customerType.value
+    ? customers.filter(c => c.type === customerType.value)
+    : customers;
+
+  const performSearch = async (term: string) => {
+    if (!term.trim()) {
+      setSearchResults(null);
+      setIsSearching(false);
+      return;
+    }
+
+    setIsSearching(true);
+    try {
+      const termLower = term.toLowerCase();
+      const localResults = filteredCustomers.filter(p =>
+        p.name.toLowerCase().includes(termLower) ||
+        p.email.toLowerCase().includes(termLower) ||
+        p.document.toLowerCase().includes(termLower)
+      );
+
+      if (localResults.length > 0) {
+        setSearchResults(localResults);
+      } else {
+        if (account?.id) {
+          const serverResults = await customer_service.searchCustomers(account.id, term, customerType.value as CustomerType);
+          setSearchResults(serverResults);
+        }
+      }
+    } catch (error) {
+      console.error('Search error:', error);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  useEffect(() => {
+    performSearch(debouncedSearchTerm);
+  }, [debouncedSearchTerm, customerType]);
+
+  const handleClearSearch = () => {
+    setSearchQuery('');
+    setSearchResults(null);
+  };
+
+  const handleChangeCustomerType = (type: CustomerTypeProp) => {
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+
+    setCustomerType(type);
+    setSearchQuery('');
+    setSearchResults(null);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800">Clientes</h1>
+          <div className="flex items-center gap-2">
+            <Users className="w-6 h-6 text-slate-600" />
+            <h1 className="text-2xl font-bold text-slate-800">Clientes</h1>
+          </div>
           <p className="text-slate-500 text-sm">Gerencie sua base de clientes e parceiros.</p>
         </div>
-        <button className="bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium shadow-sm transition-all">
+        <button
+          onClick={() => navigate('/customers/new')}
+          className="btn bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium shadow-sm transition-all"
+        >
           <UserPlus className="w-4 h-4" />
           Novo Cliente
         </button>
       </div>
 
-      {/* Search Bar */}
-      <div className="relative">
-        <Search className="absolute left-4 top-3.5 w-5 h-5 text-slate-400" />
-        <input
-          type="text"
-          placeholder="Buscar cliente por nome, email ou documento..."
-          className="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all"
-        />
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-        {[1, 2, 3, 4, 5, 6].map((i) => (
-          <div key={i} className="bg-white rounded-xl shadow-sm border border-slate-100 p-6 hover:shadow-md transition-shadow">
-            <div className="flex justify-between items-start mb-4">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-brand-100 to-brand-50 rounded-full flex items-center justify-center text-brand-700 font-bold text-lg border border-brand-100">
-                  {String.fromCharCode(64 + i)}
-                </div>
-                <div>
-                  <h3 className="font-bold text-slate-800">Cliente Exemplo {i}</h3>
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-green-50 text-green-700 font-medium">Ativo</span>
-                </div>
-              </div>
-              <button className="text-slate-400 hover:text-slate-600 p-1">
-                <MoreVertical className="w-5 h-5" />
+      <div className="bg-white rounded-xl shadow-sm border border-slate-100">
+        {/* Toolbar */}
+        <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row gap-4 justify-between">
+          <div className="flex items-center gap-2 relative flex-1 max-w-md">
+            <Search
+              className="absolute left-3 top-2.5 w-4 h-4 text-slate-400 cursor-pointer"
+              onClick={() => inputRef.current?.focus()}
+            />
+            <input
+              ref={inputRef}
+              type="text"
+              placeholder="Buscar por nome, documento, telefone ou tipo..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+            />
+            {searchQuery ? (
+              <button
+                onClick={handleClearSearch}
+                className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600"
+              >
+                <X className="w-4 h-4" />
               </button>
-            </div>
-
-            <div className="space-y-3">
-              <div className="flex items-center gap-3 text-sm text-slate-600">
-                <Mail className="w-4 h-4 text-slate-400" />
-                <span>cliente{i}@email.com</span>
+            ) : (
+              <div
+                className="absolute right-3 top-2.5 text-slate-400 cursor-pointer"
+                onClick={() => inputRef.current?.focus()}
+              >
+                <SlidersHorizontal className="w-4 h-4" />
               </div>
-              <div className="flex items-center gap-3 text-sm text-slate-600">
-                <Phone className="w-4 h-4 text-slate-400" />
-                <span>(11) 99999-999{i}</span>
-              </div>
-              <div className="flex items-center gap-3 text-sm text-slate-600">
-                <MapPin className="w-4 h-4 text-slate-400" />
-                <span>São Paulo, SP</span>
-              </div>
-            </div>
-
-            <div className="mt-6 pt-4 border-t border-slate-100 flex justify-between items-center text-xs">
-              <span className="text-slate-400">Cadastrado em 20/10/2023</span>
-              <button className="text-brand-600 font-medium hover:underline">Ver detalhes</button>
-            </div>
+            )}
           </div>
-        ))}
+          <div className="dropdown dropdown-end">
+            <button
+              tabIndex={0}
+              className="btn btn-ghost btn-sm flex items-center gap-2"
+            >
+              <Filter className="w-4 h-4" />
+              <span className="text-slate-600">
+                {customerType.label}
+              </span>
+              <ChevronDown className="w-4 h-4 opacity-50" />
+            </button>
+            <ul
+              tabIndex={0}
+              className="dropdown-content menu p-2 shadow bg-white rounded-box w-52 z-50"
+            >
+              <li>
+                <a onClick={() => handleChangeCustomerType({ value: '', label: 'Todos os Tipos' })}>
+                  Todos os Tipos
+                </a>
+              </li>
+              {customerTypes.map((type) => (
+                <li key={type.value}>
+                  <a onClick={() => handleChangeCustomerType(type)}>
+                    {type.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+
+        <InfiniteCards
+          items={searchResults || filteredCustomers}
+          hasMore={hasMore}
+          loading={loading || isSearching}
+          loadMore={loadMore}
+          onRefresh={refresh}
+        />
       </div>
     </div>
   );
