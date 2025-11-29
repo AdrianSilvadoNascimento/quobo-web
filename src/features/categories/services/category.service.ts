@@ -41,18 +41,28 @@ export class CategoryService {
 
   async getCategories(account_id: string): Promise<CategoryModel[]> {
     try {
-      const response = await server.api.get(`/category/${account_id}`, { withCredentials: true });
-      return response.data;
+      const { data } = await server.api.get(`/category/${account_id}`, { withCredentials: true });
+      return data;
     } catch (error) {
       console.error('Error fetching categories:', error);
       throw error;
     }
   }
 
+  async searchCategories(account_id: string, term: string): Promise<CategoryModel[]> {
+    try {
+      const { data } = await server.api.get(`/category/${account_id}/search?term=${term}`, { withCredentials: true });
+      return data;
+    } catch (error) {
+      console.error('Error searching categories:', error);
+      throw error;
+    }
+  }
+
   async createCategory(account_id: string, category: CategoryModel) {
     try {
-      const response = await server.api.post(`/category/${account_id}`, category, { withCredentials: true });
-      return response.data;
+      const { data } = await server.api.post(`/category/${account_id}`, category, { withCredentials: true });
+      return data;
     } catch (error) {
       console.error('Error creating category:', error);
       throw error;
@@ -61,8 +71,8 @@ export class CategoryService {
 
   async updateCategory(category: CategoryModel) {
     try {
-      const response = await server.api.put(`/category/${category.id}`, category, { withCredentials: true });
-      return response.data;
+      const { data } = await server.api.put(`/category/${category.id}`, category, { withCredentials: true });
+      return data;
     } catch (error) {
       console.error('Error updating category:', error);
       throw error;
@@ -71,8 +81,8 @@ export class CategoryService {
 
   async deleteCategory(category_id: string) {
     try {
-      const response = await server.api.delete(`/category/${category_id}`, { withCredentials: true });
-      return response.data;
+      const { data } = await server.api.delete(`/category/${category_id}`, { withCredentials: true });
+      return data;
     } catch (error) {
       console.error('Error deleting category:', error);
       throw error;

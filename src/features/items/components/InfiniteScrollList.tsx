@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { Package, MoreHorizontal } from 'lucide-react';
 import { ItemModel } from '../types/item.model';
+import Empty from '@/components/ui/Empty';
 
 interface InfiniteScrollListProps {
   items: ItemModel[];
@@ -40,9 +41,10 @@ export const InfiniteScrollList: React.FC<InfiniteScrollListProps> = ({
 
   if (items.length === 0) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <span className="text-slate-500">Nenhum item encontrado</span>
-      </div>
+      <Empty
+        description="Nenhum item encontrado"
+        icon={<Package className="w-12 h-12 text-slate-400" />}
+      />
     );
   }
 

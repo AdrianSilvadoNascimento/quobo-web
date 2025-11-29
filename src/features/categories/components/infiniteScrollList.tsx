@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { MoreHorizontal, Tags, Edit, Trash2 } from 'lucide-react';
 import { CategoryModel } from '../types/category.model';
+import Empty from '@/components/ui/Empty';
 
 interface InfiniteScrollListProps {
   categories: CategoryModel[];
@@ -73,12 +74,10 @@ export const InfiniteScrollList: React.FC<InfiniteScrollListProps> = ({
 
   if (categories.length === 0) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="flex flex-col items-center gap-2">
-          <Tags className="w-12 h-12 text-slate-400" />
-          <span className="text-slate-500">Nenhuma categoria encontrada</span>
-        </div>
-      </div>
+      <Empty
+        description="Nenhuma categoria encontrada"
+        icon={<Tags className="w-12 h-12 text-slate-400" />}
+      />
     );
   }
 

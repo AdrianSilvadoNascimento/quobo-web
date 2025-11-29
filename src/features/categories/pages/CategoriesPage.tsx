@@ -1,18 +1,27 @@
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
-import type { CategoryModel } from "../types/category.model";
-import { useCallback, useState } from "react";
+import { useDebounce } from "@/hooks/useDebounce";
 import { useAuth } from "@/contexts/AuthContext";
+
+import { Plus, Search, SlidersHorizontal, Tags, X } from "lucide-react";
+
+import type { CategoryModel } from "../types/category.model";
 import { category_service } from "../services/category.service";
-import { Plus, Tags } from "lucide-react";
 import { InfiniteScrollList } from "../components/infiniteScrollList";
 import { CategoryModal } from "../components/CategoryModal";
 
 export const CategoriesPage: React.FC = () => {
-  const [isSearching] = useState(false);
-
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<CategoryModel | null>(null);
+
+  // Search state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<CategoryModel[] | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const debouncedSearchTerm = useDebounce(searchQuery, 200);
 
   const { account } = useAuth();
 
@@ -31,6 +40,46 @@ export const CategoriesPage: React.FC = () => {
     limit: 40,
     account_id: account?.id
   });
+
+  const performSearch = async (term: string) => {
+    if (!term.trim()) {
+      setSearchResults(null);
+      setIsSearching(false);
+      return;
+    }
+
+    setIsSearching(true);
+    try {
+      const termLower = term.toLowerCase();
+      const localResults = categories.filter(category =>
+        category.name.toLowerCase().includes(termLower)
+      );
+
+      if (localResults.length > 0) {
+        setSearchResults(localResults);
+        return;
+      }
+
+      if (account?.id) {
+        const serverResults = await category_service.searchCategories(account.id, term);
+        setSearchResults(serverResults);
+      }
+    } catch (error) {
+      console.error('Search error:', error);
+    } finally {
+      setIsSearching(false);
+    }
+  }
+
+  useEffect(() => {
+    performSearch(debouncedSearchTerm);
+  }, [debouncedSearchTerm]);
+
+  const handleClearSearch = () => {
+    setSearchQuery('');
+    setSearchResults(null);
+    loadMore();
+  }
 
   const handleCreateCategory = () => {
     setEditingCategory(null);
@@ -91,16 +140,50 @@ export const CategoriesPage: React.FC = () => {
         </button>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-100">
-        {/* Product List */}
-        <InfiniteScrollList
-          categories={categories}
-          hasMore={hasMore}
-          loading={loading || isSearching}
-          loadMore={loadMore}
-          onEdit={handleEditCategory}
-          onDelete={handleDeleteCategory}
-        />
+      <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+        {/* Toolbar */}
+        <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row gap-4 justify-between">
+          <div className="relative flex-1 max-w-md">
+            <Search
+              className="absolute left-3 top-2.5 w-4 h-4 text-slate-400 cursor-pointer"
+              onClick={() => inputRef.current?.focus()}
+            />
+            <input
+              ref={inputRef}
+              type="text"
+              placeholder="Buscar por nome da categoria..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+            />
+            {searchQuery ? (
+              <button
+                onClick={handleClearSearch}
+                className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            ) : (
+              <div
+                className="absolute right-3 top-2.5 text-slate-400 cursor-pointer"
+                onClick={() => inputRef.current?.focus()}
+              >
+                <SlidersHorizontal className="w-4 h-4" />
+              </div>
+            )}
+          </div>
+        </div>
+        <div className="bg-white rounded-xl shadow-sm border border-slate-100">
+          {/* Product List */}
+          <InfiniteScrollList
+            categories={searchResults || categories}
+            hasMore={hasMore}
+            loading={loading || isSearching}
+            loadMore={loadMore}
+            onEdit={handleEditCategory}
+            onDelete={handleDeleteCategory}
+          />
+        </div>
       </div>
 
       {/* Category Modal */}
