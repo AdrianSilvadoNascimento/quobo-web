@@ -1,0 +1,8 @@
+{
+  "projects": {
+    "default": "quobo-app",
+    "staging": "quobo-app"
+  },
+  "targets": {},
+  "etags": {}
+}

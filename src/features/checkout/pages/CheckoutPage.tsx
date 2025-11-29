@@ -18,7 +18,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ withHeader = false }
   const [selectedPlan, setSelectedPlan] = useState<PlanModel | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const { data: plans = [], isLoading, isError } = useQuery({
+  const { data: plans = [] } = useQuery({
     queryKey: ['plan'],
     queryFn: () => planService.getPlans(),
   });
