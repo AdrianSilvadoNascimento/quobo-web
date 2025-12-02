@@ -25,7 +25,7 @@ import { AlertModal, type AlertType } from '@/components/AlertModal';
 export const ItemForm: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams();
-  const { account, user } = useAuth();
+  const { account } = useAuth();
 
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
@@ -146,7 +146,7 @@ export const ItemForm: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!account?.id || !user?.id) return;
+    if (!account?.id) return;
 
     setIsLoading(true);
 
@@ -162,8 +162,6 @@ export const ItemForm: React.FC = () => {
         min_stock: parseInt(formData.min_stock) || 0,
         active: formData.active,
         product_image: imagePreview || '',
-        account_id: account.id,
-        account_user_id: user.id,
       };
 
       // Find unit ID if needed

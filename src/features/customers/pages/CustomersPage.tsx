@@ -32,8 +32,8 @@ export const CustomersPage: React.FC = () => {
 
   const { account } = useAuth();
 
-  const fetchProducts = useCallback((account_id: string, page: number, limit: number) => {
-    return customer_service.getPaginatedCustomers(account_id, page, limit)
+  const fetchProducts = useCallback((page: number, limit: number) => {
+    return customer_service.getPaginatedCustomers(page, limit)
   }, [])
 
   const {
@@ -45,7 +45,6 @@ export const CustomersPage: React.FC = () => {
   } = useInfiniteScroll<CustomerModel>({
     fetchFunction: fetchProducts,
     limit: 40,
-    account_id: account?.id
   });
 
   const filteredCustomers = customerType.value
@@ -72,7 +71,7 @@ export const CustomersPage: React.FC = () => {
         setSearchResults(localResults);
       } else {
         if (account?.id) {
-          const serverResults = await customer_service.searchCustomers(account.id, term, customerType.value as CustomerType);
+          const serverResults = await customer_service.searchCustomers(term, customerType.value as CustomerType);
           setSearchResults(serverResults);
         }
       }

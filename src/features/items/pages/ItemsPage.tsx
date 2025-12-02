@@ -19,8 +19,8 @@ export const ItemsPage: React.FC = () => {
 
   const { account } = useAuth();
 
-  const fetchProducts = useCallback((account_id: string, page: number, limit: number) => {
-    return item_service.getProducts(account_id, page, limit)
+  const fetchProducts = useCallback((page: number, limit: number) => {
+    return item_service.getProducts(page, limit)
   }, [])
 
   const {
@@ -31,7 +31,6 @@ export const ItemsPage: React.FC = () => {
   } = useInfiniteScroll<ItemModel>({
     fetchFunction: fetchProducts,
     limit: 40,
-    account_id: account?.id
   });
 
   const performSearch = async (term: string) => {
@@ -54,7 +53,7 @@ export const ItemsPage: React.FC = () => {
         setSearchResults(localResults);
       } else {
         if (account?.id) {
-          const serverResults = await item_service.searchItems(account.id, term);
+          const serverResults = await item_service.searchItems(term);
           setSearchResults(serverResults);
         }
       }
