@@ -73,8 +73,8 @@ export const ItemForm: React.FC = () => {
       try {
         setIsFetching(true);
         const [cats, uoms] = await Promise.all([
-          category_service.getCategories(account.id),
-          unit_of_measure_service.getUnits(account.id)
+          category_service.getCategories(),
+          unit_of_measure_service.getUnits()
         ]);
 
         if (!cats.length) {
@@ -86,7 +86,7 @@ export const ItemForm: React.FC = () => {
         setUnits(uoms);
 
         if (id) {
-          const item = await item_service.getItem(account.id, id);
+          const item = await item_service.getItem(id);
           setFormData({
             name: item.name,
             barcode: item.barcode || '',
@@ -171,9 +171,9 @@ export const ItemForm: React.FC = () => {
       }
 
       if (id) {
-        await item_service.updateItem(account.id, id, payload);
+        await item_service.updateItem(id, payload);
       } else {
-        await item_service.createItem(account.id, payload);
+        await item_service.createItem(payload);
       }
 
       navigate('/products');

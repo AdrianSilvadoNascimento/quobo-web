@@ -9,8 +9,8 @@ export const FinancePage: React.FC = () => {
   const accountId = account?.id;
 
   const { data: financeData, isLoading, error } = useQuery({
-    queryKey: ['finance', accountId],
-    queryFn: () => accountApi.getFinanceData(accountId!),
+    queryKey: ['finance'],
+    queryFn: () => accountApi.getFinanceData(),
     enabled: !!accountId,
     staleTime: 5 * 60 * 1000,
   });

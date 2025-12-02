@@ -45,8 +45,8 @@ export interface FinanceData {
 }
 
 export const accountApi = {
-  getFinanceData: async (accountId: string): Promise<FinanceData> => {
-    const response = await server.api.get(`/account/${accountId}/finance`);
+  getFinanceData: async (): Promise<FinanceData> => {
+    const response = await server.api.get(`/account/finance`);
     return response.data;
   },
 };
