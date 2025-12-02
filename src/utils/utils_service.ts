@@ -9,7 +9,7 @@ export class UtilsService {
     limit: number,
   ): Promise<PaginatedResponse<T>> {
     try {
-      const url = `/${endpoint}/paginated?offset=${next}&limit=${limit}`
+      const url = `/${endpoint}/paginated?page=${next}&limit=${limit}`
       const response = await server.api.get(
         url,
         {
