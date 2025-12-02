@@ -4,9 +4,9 @@ import type { CustomerModel, CustomerType } from "../types/customer.model";
 import { server } from "@/services/api";
 
 export class CustomerService {
-  async getPaginatedCustomers(account_id: string, page: number, limit: number) {
+  async getPaginatedCustomers(page: number, limit: number) {
     const offset = page * limit;
-    return UtilsService.requestPaginated<CustomerModel>(`customer/${account_id}`, offset, limit);
+    return UtilsService.requestPaginated<CustomerModel>('customer', offset, limit);
   }
 
   async getCustomerById(customer_id: string) {
@@ -19,15 +19,15 @@ export class CustomerService {
     }
   }
 
-  async searchCustomers(account_id: string, searchTerm: string, type: CustomerType, limit: number = 50): Promise<CustomerModel[]> {
+  async searchCustomers(searchTerm: string, type: CustomerType, limit: number = 50): Promise<CustomerModel[]> {
     try {
       const { data } = await server.api.get(
-        `/customer/${account_id}/paginated`,
+        `/customer/paginated`,
         {
           params: {
             search: searchTerm,
             type,
-            limit: limit
+            limit
           },
           withCredentials: true
         }
@@ -56,6 +56,16 @@ export class CustomerService {
       return data;
     } catch (error) {
       console.error('Error updating customer:', error);
+      throw error;
+    }
+  }
+
+  async inactivateCustomer() {
+    try {
+      const { data } = await server.api.get(`/customer/inactives`, { withCredentials: true });
+      return data;
+    } catch (error) {
+      console.error('Error updating customer status:', error);
       throw error;
     }
   }

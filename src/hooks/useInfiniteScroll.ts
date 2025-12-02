@@ -2,19 +2,17 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 interface UseInfiniteScrollProps<T> {
-  fetchFunction: (account_id: string, page: number, limit: number) => Promise<{
+  fetchFunction: (page: number, limit: number) => Promise<{
     data: T[];
     next: string,
     total: number;
   }>;
   limit?: number;
-  account_id?: string;
 }
 
 export function useInfiniteScroll<T extends { id: string }>({
   fetchFunction,
   limit = 20,
-  account_id = '',
 }: UseInfiniteScrollProps<T>) {
   const { isAuthenticated } = useAuth();
 
@@ -40,7 +38,7 @@ export function useInfiniteScroll<T extends { id: string }>({
         isRefresh ? setRefreshing(true) : setLoading(true);
         setError(null);
 
-        const result = await fetchFunction(account_id, pageNumber, limit);
+        const result = await fetchFunction(pageNumber, limit);
 
         setData((prevData) => {
           if (isRefresh) return result.data;
@@ -62,7 +60,7 @@ export function useInfiniteScroll<T extends { id: string }>({
         setRefreshing(false);
       }
     },
-    [fetchFunction, limit, hasMore, isAuthenticated, account_id]
+    [fetchFunction, limit, hasMore, isAuthenticated]
   );
 
   const loadMore = useCallback(() => {

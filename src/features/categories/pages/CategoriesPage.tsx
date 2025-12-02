@@ -25,8 +25,8 @@ export const CategoriesPage: React.FC = () => {
 
   const { account } = useAuth();
 
-  const fetchProducts = useCallback((account_id: string, page: number, limit: number) => {
-    return category_service.getPaginatedCategories(account_id, page, limit)
+  const fetchProducts = useCallback((page: number, limit: number) => {
+    return category_service.getPaginatedCategories(page, limit)
   }, [])
 
   const {
@@ -38,7 +38,6 @@ export const CategoriesPage: React.FC = () => {
   } = useInfiniteScroll<CategoryModel>({
     fetchFunction: fetchProducts,
     limit: 40,
-    account_id: account?.id
   });
 
   const performSearch = async (term: string) => {
@@ -60,10 +59,8 @@ export const CategoriesPage: React.FC = () => {
         return;
       }
 
-      if (account?.id) {
-        const serverResults = await category_service.searchCategories(account.id, term);
-        setSearchResults(serverResults);
-      }
+      const serverResults = await category_service.searchCategories(term);
+      setSearchResults(serverResults);
     } catch (error) {
       console.error('Search error:', error);
     } finally {
@@ -93,7 +90,7 @@ export const CategoriesPage: React.FC = () => {
       if (editingCategory) {
         await category_service.updateCategory(category as CategoryModel);
       } else {
-        await category_service.createCategory(account.id, category as CategoryModel);
+        await category_service.createCategory(category as CategoryModel);
       }
       refresh();
     } catch (error) {

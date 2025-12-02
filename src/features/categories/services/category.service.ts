@@ -4,14 +4,14 @@ import { server } from '../../../services/api';
 import { CategoryModel } from '../types/category.model';
 
 export class CategoryService {
-  async getPaginatedCategories(account_id: string, page: number, limit: number) {
+  async getPaginatedCategories(page: number, limit: number) {
     const offset = page * limit;
-    return UtilsService.requestPaginated<CategoryModel>(`category/${account_id}`, offset, limit);
+    return UtilsService.requestPaginated<CategoryModel>('category', offset, limit);
   }
 
-  async getCategories(account_id: string): Promise<CategoryModel[]> {
+  async getCategories(): Promise<CategoryModel[]> {
     try {
-      const { data } = await server.api.get(`/category/${account_id}`, { withCredentials: true });
+      const { data } = await server.api.get('/category', { withCredentials: true });
       return data;
     } catch (error) {
       console.error('Error fetching categories:', error);
@@ -19,9 +19,9 @@ export class CategoryService {
     }
   }
 
-  async searchCategories(account_id: string, term: string): Promise<CategoryModel[]> {
+  async searchCategories(term: string): Promise<CategoryModel[]> {
     try {
-      const { data } = await server.api.get(`/category/${account_id}/search?term=${term}`, { withCredentials: true });
+      const { data } = await server.api.get(`/category/search?term=${term}`, { withCredentials: true });
       return data;
     } catch (error) {
       console.error('Error searching categories:', error);
@@ -29,9 +29,9 @@ export class CategoryService {
     }
   }
 
-  async createCategory(account_id: string, category: CategoryModel) {
+  async createCategory(category: CategoryModel) {
     try {
-      const { data } = await server.api.post(`/category/${account_id}`, category, { withCredentials: true });
+      const { data } = await server.api.post('/category', category, { withCredentials: true });
       return data;
     } catch (error) {
       console.error('Error creating category:', error);

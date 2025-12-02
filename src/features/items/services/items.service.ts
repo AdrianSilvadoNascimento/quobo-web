@@ -4,14 +4,14 @@ import { UtilsService } from "@/utils/utils_service";
 import { server } from '../../../services/api';
 
 export class ItemService {
-  async getProducts(account_id: string, page: number, limit: number) {
+  async getProducts(page: number, limit: number) {
     const offset = page * limit;
-    return UtilsService.requestPaginated<ItemModel>(`item/${account_id}`, offset, limit);
+    return UtilsService.requestPaginated<ItemModel>('item', offset, limit);
   }
 
-  async getItem(account_id: string, item_id: string): Promise<ItemModel> {
+  async getItem(item_id: string): Promise<ItemModel> {
     try {
-      const response = await server.api.get(`/item/${account_id}/${item_id}`, { withCredentials: true });
+      const response = await server.api.get(`/item/${item_id}`, { withCredentials: true });
       return response.data;
     } catch (error) {
       console.error('Error fetching item:', error);
@@ -19,9 +19,9 @@ export class ItemService {
     }
   }
 
-  async createItem(account_id: string, data: Partial<ItemModel>): Promise<ItemModel> {
+  async createItem(data: Partial<ItemModel>): Promise<ItemModel> {
     try {
-      const response = await server.api.post(`/item/${account_id}`, data, { withCredentials: true });
+      const response = await server.api.post('/item', data, { withCredentials: true });
       return response.data;
     } catch (error) {
       console.error('Error creating item:', error);
@@ -29,9 +29,9 @@ export class ItemService {
     }
   }
 
-  async updateItem(account_id: string, item_id: string, data: Partial<ItemModel>): Promise<ItemModel> {
+  async updateItem(item_id: string, data: Partial<ItemModel>): Promise<ItemModel> {
     try {
-      const response = await server.api.put(`/item/${account_id}/${item_id}`, data, { withCredentials: true });
+      const response = await server.api.put(`/item/${item_id}`, data, { withCredentials: true });
       return response.data;
     } catch (error) {
       console.error('Error updating item:', error);
@@ -39,10 +39,10 @@ export class ItemService {
     }
   }
 
-  async searchItems(account_id: string, searchTerm: string, limit: number = 50): Promise<ItemModel[]> {
+  async searchItems(searchTerm: string, limit: number = 50): Promise<ItemModel[]> {
     try {
       const response = await server.api.get(
-        `/item/${account_id}/search`,
+        '/item/search',
         {
           params: {
             term: searchTerm,

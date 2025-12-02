@@ -25,7 +25,7 @@ import { AlertModal, type AlertType } from '@/components/AlertModal';
 export const ItemForm: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams();
-  const { account } = useAuth();
+  const { account, user } = useAuth();
 
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
@@ -73,8 +73,8 @@ export const ItemForm: React.FC = () => {
       try {
         setIsFetching(true);
         const [cats, uoms] = await Promise.all([
-          category_service.getCategories(account.id),
-          unit_of_measure_service.getUnits(account.id)
+          category_service.getCategories(),
+          unit_of_measure_service.getUnits()
         ]);
 
         if (!cats.length) {
@@ -86,7 +86,7 @@ export const ItemForm: React.FC = () => {
         setUnits(uoms);
 
         if (id) {
-          const item = await item_service.getItem(account.id, id);
+          const item = await item_service.getItem(id);
           setFormData({
             name: item.name,
             barcode: item.barcode || '',
@@ -146,7 +146,7 @@ export const ItemForm: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!account?.id) return;
+    if (!account?.id || !user?.id) return;
 
     setIsLoading(true);
 
@@ -162,6 +162,8 @@ export const ItemForm: React.FC = () => {
         min_stock: parseInt(formData.min_stock) || 0,
         active: formData.active,
         product_image: imagePreview || '',
+        account_id: account.id,
+        account_user_id: user.id,
       };
 
       // Find unit ID if needed
@@ -171,9 +173,9 @@ export const ItemForm: React.FC = () => {
       }
 
       if (id) {
-        await item_service.updateItem(account.id, id, payload);
+        await item_service.updateItem(id, payload);
       } else {
-        await item_service.createItem(account.id, payload);
+        await item_service.createItem(payload);
       }
 
       navigate('/products');
