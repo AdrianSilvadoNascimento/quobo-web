@@ -39,6 +39,17 @@ export const InfiniteScrollList: React.FC<InfiniteScrollListProps> = ({
     };
   }, [hasMore, loading, loadMore]);
 
+  if (loading && items.length === 0) {
+    return (
+      <div className="flex justify-center items-center p-12">
+        <div className="flex flex-col items-center gap-3">
+          <span className="loading loading-spinner loading-lg text-brand-600"></span>
+          <p className="text-slate-500 text-sm font-medium">Buscando produtos...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (items.length === 0) {
     return (
       <Empty

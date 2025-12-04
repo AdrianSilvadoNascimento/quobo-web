@@ -4,9 +4,9 @@ import { server } from '../../../services/api';
 import { CategoryModel } from '../types/category.model';
 
 export class CategoryService {
-  async getPaginatedCategories(page: number, limit: number) {
+  async getPaginatedCategories(page: number, limit: number, search?: string) {
     const offset = page * limit;
-    return UtilsService.requestPaginated<CategoryModel>('category', offset, limit);
+    return UtilsService.requestPaginated<CategoryModel>('category', offset, limit, { term: search });
   }
 
   async getCategories(): Promise<CategoryModel[]> {

@@ -16,6 +16,7 @@ import {
   CreditCard,
   Settings,
   User,
+  ClipboardCheck,
 } from 'lucide-react';
 
 import QuoboIcon from '@/assets/quobo-icon.svg';
@@ -33,7 +34,8 @@ export const DashboardLayout: React.FC = () => {
     { label: 'Produtos', icon: Package, path: '/products' },
     { label: 'Movimentações', icon: ArrowLeftRight, path: '/movements' },
     { label: 'Categorias', icon: Tag, path: '/categories' },
-    { label: 'Clientes', icon: Users, path: '/customers' }
+    { label: 'Clientes', icon: Users, path: '/customers' },
+    { label: 'Auditorias', icon: ClipboardCheck, path: '/audits' },
   ];
 
   const isActive = (path: string) => location.pathname === path;

@@ -31,8 +31,6 @@ export function useInfiniteScroll<T extends { id: string }>({
 
       if (loadingRef.current && !isRefresh) return;
 
-      if (!hasMore && !isRefresh && pageNumber > 0) return;
-
       try {
         loadingRef.current = true;
         isRefresh ? setRefreshing(true) : setLoading(true);
@@ -60,7 +58,7 @@ export function useInfiniteScroll<T extends { id: string }>({
         setRefreshing(false);
       }
     },
-    [fetchFunction, limit, hasMore, isAuthenticated]
+    [fetchFunction, limit, isAuthenticated]
   );
 
   const loadMore = useCallback(() => {

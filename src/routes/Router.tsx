@@ -16,6 +16,9 @@ import { ProfilePage } from '@/features/account/pages/ProfilePage';
 import { FinancePage } from '@/features/account/pages/FinancePage';
 import { CheckoutPage } from '@/features/checkout/pages/CheckoutPage';
 import CustomerForm from '@/features/customers/pages/CustomerForm';
+import { AuditsPage } from '@/features/audits/pages/AuditsPage';
+import { NewAuditPage } from '@/features/audits/pages/NewAuditPage';
+import { AuditDetailsPage } from '@/features/audits/pages/AuditDetailsPage';
 
 export const Router: React.FC = () => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -51,6 +54,11 @@ export const Router: React.FC = () => {
             <Route path="/customers/:id" element={<CustomerForm />} />
 
             <Route path="/categories" element={<CategoriesPage />} />
+
+            {/* Audits Routes */}
+            <Route path="/audits" element={<AuditsPage />} />
+            <Route path="/audits/new" element={<NewAuditPage />} />
+            <Route path="/audits/:id" element={<AuditDetailsPage />} />
 
             {/* Checkout/Plans Routes */}
             <Route path="/checkout" element={<CheckoutPage />} />

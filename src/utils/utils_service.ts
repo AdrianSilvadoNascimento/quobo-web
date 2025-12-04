@@ -7,9 +7,24 @@ export class UtilsService {
     endpoint: string,
     next: number,
     limit: number,
+    queryParams?: Record<string, any>
   ): Promise<PaginatedResponse<T>> {
     try {
-      const url = `/${endpoint}/paginated?page=${next}&limit=${limit}`
+      let url = `/${endpoint}/paginated?page=${next}&limit=${limit}`;
+
+      if (queryParams) {
+        const params = new URLSearchParams();
+        Object.entries(queryParams).forEach(([key, value]) => {
+          if (value !== undefined && value !== null && value !== '') {
+            params.append(key, String(value));
+          }
+        });
+        const queryString = params.toString();
+        if (queryString) {
+          url += `&${queryString}`;
+        }
+      }
+
       const response = await server.api.get(
         url,
         {

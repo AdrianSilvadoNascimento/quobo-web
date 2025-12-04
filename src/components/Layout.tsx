@@ -10,7 +10,8 @@ import {
   X,
   Bell,
   Search,
-  Box
+  Box,
+  ClipboardList
 } from 'lucide-react';
 
 interface LayoutProps {
@@ -27,6 +28,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, onLogout }) => {
     { label: 'Produtos', icon: Package, path: '/products' },
     { label: 'Movimentações', icon: ArrowLeftRight, path: '/movements' },
     { label: 'Clientes', icon: Users, path: '/customers' },
+    { label: 'Auditorias', icon: ClipboardList, path: '/audits' },
   ];
 
   const isActive = (path: string) => location.pathname === path;
