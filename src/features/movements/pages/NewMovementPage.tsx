@@ -126,10 +126,6 @@ export const NewMovementPage: React.FC = () => {
     }
   };
 
-  const getTypeConfig = (type: MovementType) => {
-    return movementTypes.find(t => t.value === type);
-  };
-
   return (
     <div className="space-y-6">
       {/* Header */}
