@@ -26,7 +26,8 @@
     "react-pro-sidebar": "^1.1.0",
     "react-router-dom": "^7.9.6",
     "react-svg-credit-card-payment-icons": "^5.1.2",
-    "recharts": "^3.5.1"
+    "recharts": "^3.5.1",
+    "socket.io-client": "^4.8.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",

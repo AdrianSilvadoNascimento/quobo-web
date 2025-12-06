@@ -117,7 +117,7 @@ export const MovementsPage: React.FC = () => {
         </div>
         <button
           onClick={() => setIsModalOpen(true)}
-          className="btn btn-lg flex items-center text-sm gap-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+          className="btn flex items-center text-sm gap-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
         >
           <Plus className="w-5 h-5" />
           Nova Movimentação
