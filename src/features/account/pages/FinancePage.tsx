@@ -3,17 +3,31 @@ import { useQuery } from '@tanstack/react-query';
 import { CreditCard, Download, Clock, CheckCircle, Calendar } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { accountApi } from '@/services/accountApi';
+import { CancelSubscriptionModal } from '../components/CancelSubscriptionModal';
+
+import { useSubscriptionSocket } from '@/hooks/useSubscriptionSocket';
 
 export const FinancePage: React.FC = () => {
   const { account } = useAuth();
+  const [isCancelModalOpen, setIsCancelModalOpen] = React.useState(false);
   const accountId = account?.id;
 
-  const { data: financeData, isLoading, error } = useQuery({
+  // Listen for real-time updates
+  const { lastUpdate } = useSubscriptionSocket(accountId);
+
+  const { data: financeData, isLoading, error, refetch } = useQuery({
     queryKey: ['finance'],
     queryFn: () => accountApi.getFinanceData(),
     enabled: !!accountId,
     staleTime: 5 * 60 * 1000,
   });
+
+  // Refetch when socket notifies of changes
+  React.useEffect(() => {
+    if (lastUpdate) {
+      refetch();
+    }
+  }, [lastUpdate, refetch]);
 
   const formattedSubscription = useMemo(() => {
     if (!financeData?.subscription) return null;
@@ -31,7 +45,7 @@ export const FinancePage: React.FC = () => {
 
     return {
       ...sub,
-      renewalDateFormatted: expirationDate?.toLocaleDateString('pt-BR'),
+      renewalDateFormatted: expirationDate?.toLocaleDateString('pt-BR', { timeZone: 'UTC' }),
       planValueFormatted: sub.plan_value
         ? `R$ ${(sub.plan_value / 100).toFixed(2).replace('.', ',')}`
         : 'R$ 0,00',
@@ -118,14 +132,23 @@ export const FinancePage: React.FC = () => {
                       <span>Valor: <strong>{formattedSubscription?.planValueFormatted || 'R$ 0,00'}</strong>/mês</span>
                     </div>
                   )}
+                {formattedSubscription?.canceled_at && (
+                  <div className="flex items-center gap-2 text-red-600 font-medium">
+                    <Clock className="w-4 h-4" />
+                    <span>Cancelamento agendado</span>
+                  </div>
+                )}
               </div>
             </div>
             <div className="flex flex-col gap-2 min-w-[180px]">
               <button className="btn btn-primary btn-sm bg-gradient-to-br from-[#22B8E6] via-[#2563EB] to-[#1E40AF] opacity-80 text-white text-xs font-bold rounded-full transition-colors hidden sm:block">
                 {formattedSubscription?.is_trial ? 'Contratar Assinatura' : 'Fazer Upgrade'}
               </button>
-              {!formattedSubscription?.is_trial && (
-                <button className="btn text-red-600 w-full bg-white border border-red-200 hover:bg-slate-50 font-medium py-2 px-4 transition-colors">
+              {!formattedSubscription?.is_trial && !formattedSubscription?.canceled_at && (
+                <button
+                  onClick={() => setIsCancelModalOpen(true)}
+                  className="btn text-red-600 w-full bg-white border border-red-200 hover:bg-slate-50 font-medium py-2 px-4 transition-colors"
+                >
                   Cancelar Assinatura
                 </button>
               )}
@@ -236,6 +259,15 @@ export const FinancePage: React.FC = () => {
           )}
         </div>
       </section>
+
+      {formattedSubscription?.id && (
+        <CancelSubscriptionModal
+          isOpen={isCancelModalOpen}
+          onClose={() => setIsCancelModalOpen(false)}
+          subscriptionId={formattedSubscription.id}
+          renewalDate={formattedSubscription.renewalDateFormatted || 'o fim do período'}
+        />
+      )}
     </div>
   );
 };

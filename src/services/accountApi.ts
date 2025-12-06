@@ -49,4 +49,7 @@ export const accountApi = {
     const response = await server.api.get(`/account/finance`);
     return response.data;
   },
+  cancelSubscription: async (subscriptionId: string): Promise<void> => {
+    await server.api.post(`/subscription/${subscriptionId}/cancel`);
+  },
 };

@@ -27,7 +27,6 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ plan, isOpen, onCl
   const { updateSubscriptionStatus, user, account } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccessOpen, setIsSuccessOpen] = useState(false);
-  const [isGeneratingToken, setIsGeneratingToken] = useState(false);
   const [isFlipped, setIsFlipped] = useState(false);
   const [cardData, setCardData] = useState<CreditCardModel>({
     card_number: '',
@@ -39,8 +38,6 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ plan, isOpen, onCl
     brand: '',
   });
 
-  const [paymentToken, setPaymentToken] = useState('');
-  const [cardMask, setCardMask] = useState('');
 
   // Alert Modal State
   const [alertModal, setAlertModal] = useState({
@@ -58,7 +55,6 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ plan, isOpen, onCl
     setAlertModal((prev) => ({ ...prev, isOpen: false }));
   };
 
-  const debouncedCardData = useDebounce(cardData, 500);
   const debouncedBrand = useDebounce(cardData.card_number, 150);
 
   useEffect(() => {
@@ -115,41 +111,6 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ plan, isOpen, onCl
     fetchBrand();
   }, [debouncedBrand]);
 
-  const isFormValid = () => {
-    return (
-      cardData.card_number.length === 16 &&
-      cardData.card_holder_name.length > 0 &&
-      cardData.expiration_month > 0 &&
-      cardData.expiration_year > 0 &&
-      cardData.security_code.length === 3 &&
-      cardData.holder_document.length >= 11 &&
-      cardData.holder_document.length <= 14
-    );
-  };
-
-  useEffect(() => {
-    if (!isFormValid()) return;
-
-    const card = {
-      card_number: debouncedCardData.card_number,
-      holder_name: debouncedCardData.card_holder_name,
-      expiration_month: String(debouncedCardData.expiration_month),
-      expiration_year: String(debouncedCardData.expiration_year),
-      security_code: debouncedCardData.security_code,
-      holder_document: debouncedCardData.holder_document,
-      brand: debouncedCardData.brand,
-    }
-
-    const generateToken = async () => {
-      setIsGeneratingToken(true);
-      const { token, card_mask } = await efiService.generateToken(card);
-      setPaymentToken(token);
-      setCardMask(card_mask);
-      setIsGeneratingToken(false);
-    }
-
-    generateToken();
-  }, [debouncedCardData]);
 
   const triggerConfetti = () => {
     const duration = 3 * 1000;
@@ -179,7 +140,20 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ plan, isOpen, onCl
     setIsLoading(true);
 
     try {
-      if (!paymentToken) {
+      // 1. Generate Payment Token
+      const card = {
+        card_number: cardData.card_number,
+        holder_name: cardData.card_holder_name,
+        expiration_month: String(cardData.expiration_month),
+        expiration_year: String(cardData.expiration_year),
+        security_code: cardData.security_code,
+        holder_document: cardData.holder_document,
+        brand: cardData.brand,
+      };
+
+      const { token: generatedToken, card_mask: generatedMask } = await efiService.generateToken(card);
+
+      if (!generatedToken) {
         showAlert(
           'Erro no Token de Pagamento',
           'Não foi possível gerar o token de pagamento. Por favor, verifique os dados do cartão e tente novamente.',
@@ -188,6 +162,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ plan, isOpen, onCl
         setIsLoading(false);
         return;
       }
+
 
       if (!user || !account) {
         showAlert(
@@ -203,16 +178,16 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ plan, isOpen, onCl
         plan_id: plan.id,
         account_id: account.id,
         account_user_id: user.id,
-        credit_card_token: paymentToken,
-        card_mask: cardMask,
+        credit_card_token: generatedToken, // Use generatedToken directly
+        card_mask: generatedMask, // Use generatedMask directly
         expiration_date: `${String(cardData.expiration_month).padStart(2, '0')}/${cardData.expiration_year}`,
         brand: cardData.brand,
         holder_document: cardData.holder_document,
       };
 
       const accountCardData: Partial<AccountCardModel> = {
-        card_token: paymentToken,
-        card_mask: cardMask,
+        card_token: generatedToken, // Use generatedToken directly
+        card_mask: generatedMask, // Use generatedMask directly
         expiration_date: `${String(cardData.expiration_month).padStart(2, '0')}/${cardData.expiration_year}` as any,
         brand: cardData.brand,
         account_id: account.id,
@@ -230,6 +205,8 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ plan, isOpen, onCl
       // Show success modal and confetti
       setIsSuccessOpen(true);
       triggerConfetti();
+
+      navigate('/dashboard');
     } catch (error: any) {
       console.error('Checkout error:', error);
 
@@ -237,8 +214,21 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ plan, isOpen, onCl
       let errorTitle = 'Erro no Processamento';
       let errorMessage = 'Ocorreu um erro ao processar seu checkout. Por favor, verifique seus dados e tente novamente.';
 
-      if (error?.response?.data?.message) {
-        errorMessage = error.response.data.message;
+      if (error?.response?.data) {
+        const { message, details } = error.response.data;
+        if (message) errorMessage = message;
+
+        // Helper to format details if they are an object/array
+        if (details) {
+          if (typeof details === 'string') {
+            errorMessage += `\n${details}`;
+          } else if (typeof details === 'object') {
+            // Try to find specific field errors or join them
+            const detailsStr = Object.values(details).filter(v => typeof v === 'string').join('\n');
+            if (detailsStr) errorMessage += `\n${detailsStr}`;
+            else errorMessage += `\n${JSON.stringify(details)}`;
+          }
+        }
       } else if (error?.message) {
         errorMessage = error.message;
       }
@@ -251,7 +241,6 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ plan, isOpen, onCl
         errorMessage = 'Sua sessão expirou. Por favor, faça login novamente.';
       } else if (error?.response?.status === 500) {
         errorTitle = 'Erro no Servidor';
-        errorMessage = 'Ocorreu um erro no servidor. Por favor, tente novamente em alguns instantes.';
       }
 
       showAlert(errorTitle, errorMessage, 'error');
@@ -262,22 +251,14 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ plan, isOpen, onCl
 
   const submitButton = () => {
     let buttonLabel = 'Confirmar Assinatura'
-    if (isGeneratingToken) {
-      buttonLabel = 'Criptografando dados...'
-    } else if (isLoading) {
+    if (isLoading) {
       buttonLabel = 'Processando...'
     }
 
     return (
       <>
-        {isLoading || isGeneratingToken ? (
-          <>
-            <span className="loading loading-spinner"></span>
-            {buttonLabel}
-          </>
-        ) : (
-          buttonLabel
-        )}
+        {isLoading && <span className="loading loading-spinner"></span>}
+        {buttonLabel}
       </>
     );
   };
@@ -508,7 +489,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ plan, isOpen, onCl
                   <button
                     type="submit"
                     className="btn btn-primary btn-block h-12 text-lg shadow-lg shadow-brand-500/30 hover:shadow-brand-500/50 transition-all"
-                    disabled={isLoading || isGeneratingToken}
+                    disabled={isLoading}
                   >
                     {submitButton()}
                   </button>
