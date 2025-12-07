@@ -218,7 +218,7 @@ export const DashboardLayout: React.FC = () => {
             {!isTrial && subscription?.canceled_at && !isSubscriptionExpired && (
               <>
                 <div className="bg-red-50 text-red-600 px-3 py-1 rounded-full text-xs font-medium border border-red-100 hidden sm:block">
-                  Agendado para cancelamento em {new Date(subscription.next_renewal).toLocaleDateString()}
+                  Agendado para cancelamento em {new Date(subscription.next_renewal).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
                 </div>
                 <button
                   onClick={() => navigate('/checkout')}

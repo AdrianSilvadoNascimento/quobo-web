@@ -21,6 +21,9 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Module-level variable to prevent double execution in StrictMode
+let restorationPromise: Promise<any> | null = null;
+
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -33,7 +36,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [expirationDate, setExpirationDate] = useState<Date | null>(null);
 
   const isRefreshing = useRef(false);
-  const hasInitialized = useRef(false);
 
   const updateUserData = (data: any) => {
     setUser(data.account_user);
@@ -69,8 +71,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const initializeAuth = async () => {
-    if (hasInitialized.current) return;
-    hasInitialized.current = true;
+    // If already authenticated or loading is false (checked), don't run again if not needed.
+    // However, for strict mode initial load, we rely on restorationPromise.
+
     const hasSession = localStorage.getItem('session_active') === 'true';
 
     if (!hasSession) {
@@ -79,7 +82,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
 
     try {
-      const data = await authService.restoreSession();
+      // Reuse existing promise if one is already in flight
+      if (!restorationPromise) {
+        restorationPromise = authService.restoreSession();
+      }
+
+      const data = await restorationPromise;
 
       if (data?.token) {
         authService.setAccessToken(data.token);
@@ -90,6 +98,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     } catch (error) {
       console.error('Failed to restore session:', error);
       clearUserData();
+      // On error, we might want to reset the promise to allow retries, 
+      // but for a page load session restore, failure usually means login needed.
+      restorationPromise = null;
     } finally {
       setIsLoading(false);
     }
