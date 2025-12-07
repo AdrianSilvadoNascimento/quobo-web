@@ -36,7 +36,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [expirationDate, setExpirationDate] = useState<Date | null>(null);
 
   const isRefreshing = useRef(false);
-  const hasInitialized = useRef(false);
 
   const updateUserData = (data: any) => {
     setUser(data.account_user);
