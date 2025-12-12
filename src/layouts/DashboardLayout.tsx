@@ -230,10 +230,10 @@ export const DashboardLayout: React.FC = () => {
 
             <div className="h-8 w-[1px] bg-slate-200 mx-2 hidden sm:block"></div>
 
-            <button className="p-2 rounded-full hover:bg-slate-100 text-slate-500 relative">
+            {/* <button className="p-2 rounded-full hover:bg-slate-100 text-slate-500 relative">
               <Bell className="w-5 h-5" />
               <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
-            </button>
+            </button> */}
 
             {/* User Dropdown - DaisyUI */}
             <div className="dropdown dropdown-end">

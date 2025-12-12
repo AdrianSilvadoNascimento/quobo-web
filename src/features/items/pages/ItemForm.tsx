@@ -33,6 +33,7 @@ export const ItemForm: React.FC = () => {
 
   const [categories, setCategories] = useState<CategoryModel[]>([]);
   const [units, setUnits] = useState<UnitOfMeasureModel[]>([]);
+  const [imageError, setImageError] = useState(false);
 
   const [openEmptyCategoryModal, setOpenEmptyCategoryModal] = useState(false);
 
@@ -375,11 +376,17 @@ export const ItemForm: React.FC = () => {
             <div className="relative">
               {imagePreview ? (
                 <div className="relative aspect-square w-full rounded-lg overflow-hidden border border-slate-200 group">
-                  <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                  {imageError ? (
+                    <div className="w-full h-full flex items-center justify-center text-slate-300 bg-slate-50">
+                      <Package className="w-10 h-10" />
+                    </div>
+                  ) : (
+                    <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" onError={() => setImageError(true)} />
+                  )}
                   <button
                     type="button"
                     onClick={() => setImagePreview(null)}
-                    className="cursor-pointer absolute top-2 right-2 p-1.5 bg-white/90 text-red-500 rounded-full shadow-sm hover:bg-white transition-all opacity-0 group-hover:opacity-100"
+                    className="cursor-pointer absolute top-2 right-2 p-1.5 bg-white/90 text-red-500 rounded-full shadow-sm hover:bg-white transition-all opacity-100 md:opacity-0 group-hover:md:opacity-100"
                   >
                     <X className="w-4 h-4" />
                   </button>
