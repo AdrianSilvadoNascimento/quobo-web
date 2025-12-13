@@ -75,6 +75,15 @@ export class AuthService {
     }
   }
 
+  async resendVerificationEmail(email: string) {
+    try {
+      const { data } = await server.api.post('/auth/resend-verification-email', { email });
+      return data;
+    } catch (error) {
+      throw error;
+    }
+  }
+
   async resetPassword(params: { email: string; token: string; password: string; passwordConfirmation: string }) {
     try {
       const args = {

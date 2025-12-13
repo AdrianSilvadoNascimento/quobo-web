@@ -3,6 +3,8 @@ export class UserModel {
   name!: string;
   lastname!: string;
   email!: string;
+  email_verified?: boolean;
+  email_verification_token?: string;
   avatar!: string;
   phone_number!: string;
   confirm_password!: string;
@@ -26,6 +28,8 @@ export class UserModel {
     this.name = '';
     this.lastname = '';
     this.email = '';
+    this.email_verified = false;
+    this.email_verification_token = '';
     this.avatar = '';
     this.phone_number = '';
     this.address = '';
