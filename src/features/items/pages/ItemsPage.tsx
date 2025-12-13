@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import type { ItemModel } from '../types/item.model';
 import { useDebounce } from '@/hooks/useDebounce';
 import { InfiniteScrollList } from '../components/InfiniteScrollList';
+import { InfiniteItemCards } from '../components/InfiniteCards';
 
 export const ItemsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -93,7 +94,7 @@ export const ItemsPage: React.FC = () => {
         </button>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+      <div className="bg-white rounded-xl shadow-sm border border-slate-100">
         {/* Toolbar */}
         <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row gap-4 justify-between">
           <div className="relative flex-1 max-w-md">
@@ -127,13 +128,26 @@ export const ItemsPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Product List */}
-        <InfiniteScrollList
-          items={searchResults || products}
-          hasMore={hasMore}
-          loading={loading || isSearching}
-          loadMore={loadMore}
-        />
+        <div className="md:hidden block">
+          <InfiniteItemCards
+            items={searchResults || products}
+            hasMore={hasMore}
+            loading={loading || isSearching}
+            loadMore={loadMore}
+            onRefresh={loadMore}
+          />
+        </div>
+
+        <div className="md:block hidden">
+          {/* Product List */}
+          <InfiniteScrollList
+            items={searchResults || products}
+            hasMore={hasMore}
+            loading={loading || isSearching}
+            loadMore={loadMore}
+            onRefresh={loadMore}
+          />
+        </div>
       </div>
     </div>
   );

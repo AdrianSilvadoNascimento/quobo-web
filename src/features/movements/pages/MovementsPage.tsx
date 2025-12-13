@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Plus, TrendingUp, Loader2, List, BarChart3, Search, X, SlidersHorizontal, Filter, ChevronDown } from 'lucide-react';
+import { Plus, TrendingUp, Loader2, List, BarChart3, Search, X, SlidersHorizontal, Filter, ChevronDown, ArrowLeftRight } from 'lucide-react';
 import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 import { useDebounce } from '@/hooks/useDebounce';
 import { movement_service } from '../services/movement.service';
@@ -110,9 +110,12 @@ export const MovementsPage: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-800">Movimentações</h1>
+      <div className="flex items-center flex-wrap justify-between">
+        <div className="mb-4">
+          <div className="flex items-center gap-2">
+            <ArrowLeftRight className="w-6 h-6 text-slate-400" />
+            <h1 className="text-2xl font-bold text-slate-800">Movimentações</h1>
+          </div>
           <p className="text-sm text-slate-500">Visualize e gerencie movimentações de estoque</p>
         </div>
         <button
@@ -163,7 +166,7 @@ export const MovementsPage: React.FC = () => {
               <input
                 ref={inputRef}
                 type="text"
-                placeholder="Buscar por produto, código de barras ou descrição..."
+                placeholder="Buscar por produto, código de barras..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
@@ -184,7 +187,7 @@ export const MovementsPage: React.FC = () => {
                 </div>
               )}
             </div>
-            <div className="dropdown dropdown-end">
+            <div className="dropdown dropdown-start md:dropdown-end">
               <button
                 tabIndex={0}
                 className="btn btn-ghost btn-sm flex items-center gap-2"

@@ -74,13 +74,13 @@ export const MovementsAnalyticsTab: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header with Period Selector */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
+      <div className="flex items-center flex-wrap justify-between">
+        <div className="flex items-center gap-2 mb-4 md:mb-0">
           <BarChart3 className="w-5 h-5 text-slate-600" />
           <h2 className="text-lg font-semibold text-slate-800">Análise de Movimentações</h2>
         </div>
 
-        <div className="dropdown dropdown-end">
+        <div className="dropdown dropdown-start md:dropdown-end">
           <button
             tabIndex={0}
             className="btn btn-ghost btn-sm flex items-center gap-2"

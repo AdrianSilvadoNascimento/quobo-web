@@ -39,6 +39,15 @@ export class ItemService {
     }
   }
 
+  async deleteItem(item_id: string): Promise<void> {
+    try {
+      await server.api.delete(`/item/${item_id}`, { withCredentials: true });
+    } catch (error) {
+      console.error('Error deleting item:', error);
+      throw error;
+    }
+  }
+
   async searchItems(searchTerm: string, limit: number = 50): Promise<ItemModel[]> {
     try {
       const response = await server.api.get(

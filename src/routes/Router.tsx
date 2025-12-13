@@ -19,6 +19,8 @@ import CustomerForm from '@/features/customers/pages/CustomerForm';
 import { AuditsPage } from '@/features/audits/pages/AuditsPage';
 import { NewAuditPage } from '@/features/audits/pages/NewAuditPage';
 import { AuditDetailsPage } from '@/features/audits/pages/AuditDetailsPage';
+import ForgotPassword from '@/features/auth/pages/ForgotPassword';
+import ResetPassword from '@/features/auth/pages/ResetPassword';
 
 export const Router: React.FC = () => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -36,6 +38,8 @@ export const Router: React.FC = () => {
       {/* Public Routes */}
       <Route path="/login" element={!isAuthenticated ? <LoginPage /> : <Navigate to="/dashboard" />} />
       <Route path="/register" element={!isAuthenticated ? <RegisterPage /> : <Navigate to="/dashboard" />} />
+      <Route path="/forgot-password" element={!isAuthenticated ? <ForgotPassword /> : <Navigate to="/dashboard" />} />
+      <Route path="/reset-password" element={!isAuthenticated ? <ResetPassword /> : <Navigate to="/dashboard" />} />
 
       {/* Protected Routes */}
       {

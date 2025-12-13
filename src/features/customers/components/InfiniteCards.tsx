@@ -69,6 +69,7 @@ export const InfiniteCards: React.FC<InfiniteCardsProps> = ({
           <CustomerCard key={item.id} customer={item} onDelete={onRefresh} />
         ))}
       </div>
+      <div ref={observerTarget} />
     </div>
   )
 }

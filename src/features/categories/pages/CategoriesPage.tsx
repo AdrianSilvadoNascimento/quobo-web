@@ -9,6 +9,7 @@ import type { CategoryModel } from "../types/category.model";
 import { category_service } from "../services/category.service";
 import { InfiniteScrollList } from "../components/infiniteScrollList";
 import { CategoryModal } from "../components/CategoryModal";
+import { InfiniteCategoryCards } from "../components/InfiniteCards";
 
 export const CategoriesPage: React.FC = () => {
   // Modal state
@@ -170,8 +171,21 @@ export const CategoriesPage: React.FC = () => {
             )}
           </div>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border border-slate-100">
-          {/* Product List */}
+
+        <div className="block md:hidden">
+          <InfiniteCategoryCards
+            categories={categories}
+            hasMore={hasMore}
+            onEdit={handleEditCategory}
+            onDelete={handleDeleteCategory}
+            loading={loading}
+            loadMore={loadMore}
+            onRefresh={refresh}
+          />
+        </div>
+
+        <div className="hidden md:block bg-white rounded-xl shadow-sm border border-slate-100">
+          {/* Category List */}
           <InfiniteScrollList
             categories={searchResults || categories}
             hasMore={hasMore}
