@@ -57,6 +57,40 @@ export class AuthService {
     }
   }
 
+  async forgotPassword(email: string) {
+    try {
+      const { data } = await server.api.post('/auth/forgot-password', { email });
+      return data;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async resendToken(email: string) {
+    try {
+      const { data } = await server.api.post('/auth/resend-token', { email });
+      return data;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async resetPassword(params: { email: string; token: string; password: string; passwordConfirmation: string }) {
+    try {
+      const args = {
+        email: params.email,
+        code: params.token,
+        newPassword: params.password,
+        confirmPassword: params.passwordConfirmation
+      };
+      const { data } = await server.api.post('/auth/reset-password', args);
+      debugger
+      return data;
+    } catch (error) {
+      throw error;
+    }
+  }
+
   /**
    * Restaura a sessão ao inicializar a aplicação
    * Usa o refresh_token do cookie para obter um novo access_token

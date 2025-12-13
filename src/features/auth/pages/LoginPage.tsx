@@ -249,12 +249,12 @@ export const LoginPage: React.FC = () => {
                   />
                   Lembrar de mim
                 </label>
-                <a
-                  href="#"
+                <Link
+                  to="/forgot-password"
                   className="text-blue-500 hover:text-blue-700 font-medium hover:underline transition-all"
                 >
                   Esqueceu a senha?
-                </a>
+                </Link>
               </div>
 
               {/* Submit Button */}

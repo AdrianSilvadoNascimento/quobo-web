@@ -8,6 +8,7 @@ interface AuthContextType {
   isLoading: boolean;
   login: (args: { email: string; password: string; remember?: boolean }) => Promise<void>;
   logout: () => void;
+  forgotPassword: (email: string) => Promise<void>;
   user: UserModel | null;
   account: AccountModel | null;
   subscription: SubscriptionModel | null;
@@ -71,9 +72,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const initializeAuth = async () => {
-    // If already authenticated or loading is false (checked), don't run again if not needed.
-    // However, for strict mode initial load, we rely on restorationPromise.
-
     const hasSession = localStorage.getItem('session_active') === 'true';
 
     if (!hasSession) {
@@ -82,7 +80,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
 
     try {
-      // Reuse existing promise if one is already in flight
       if (!restorationPromise) {
         restorationPromise = authService.restoreSession();
       }
@@ -98,8 +95,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     } catch (error) {
       console.error('Failed to restore session:', error);
       clearUserData();
-      // On error, we might want to reset the promise to allow retries, 
-      // but for a page load session restore, failure usually means login needed.
+
       restorationPromise = null;
     } finally {
       setIsLoading(false);
@@ -143,6 +139,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  const forgotPassword = async (email: string) => {
+    try {
+      await authService.forgotPassword(email);
+    } catch (error) {
+      console.error("Forgot password failed", error);
+    }
+  };
+
   const isSubscriptionExpired = (expirationDays !== null && expirationDays <= 0 && !isAssinant);
 
   const updateSubscriptionStatus = async () => {
@@ -169,6 +173,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       isLoading,
       login,
       logout,
+      forgotPassword,
       user,
       account,
       subscription,
