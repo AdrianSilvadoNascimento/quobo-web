@@ -9,7 +9,6 @@ import {
   ArrowLeftRight,
   Users,
   LogOut,
-  Bell,
   Menu as MenuIcon,
   Tag,
   ChevronDown,
@@ -22,6 +21,7 @@ import {
 import QuoboIcon from '@/assets/quobo-icon.svg';
 
 import { useSubscriptionSocket } from '../hooks/useSubscriptionSocket';
+import { authService } from '@/features/auth/services/auth.service';
 
 export const DashboardLayout: React.FC = () => {
   const { logout, user, account, expirationDays, isTrial, subscription, isSubscriptionExpired, updateSubscriptionStatus } = useAuth();
@@ -39,6 +39,29 @@ export const DashboardLayout: React.FC = () => {
       updateSubscriptionStatus();
     }
   }, [lastUpdate, updateSubscriptionStatus]);
+
+  const [isResending, setIsResending] = useState(false);
+  const [resendSuccess, setResendSuccess] = useState(false);
+
+  const handleResendVerificationEmail = async () => {
+    if (!user?.email || isResending) return;
+
+    try {
+      setIsResending(true);
+      await authService.resendVerificationEmail(user.email);
+      setResendSuccess(true);
+
+      // Reset success message after 5 seconds to allow resending again if needed
+      setTimeout(() => {
+        setResendSuccess(false);
+      }, 5000);
+    } catch (error) {
+      console.error('Failed to resend verification email', error);
+      // Ideally show a toast error here
+    } finally {
+      setIsResending(false);
+    }
+  };
 
   const navItems = [
     { label: 'Visão Geral', icon: LayoutDashboard, path: '/dashboard' },
@@ -170,6 +193,29 @@ export const DashboardLayout: React.FC = () => {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col h-screen overflow-hidden">
+        {/* Verification Banner */}
+        {user && !user.email_verified && (
+          <div className="bg-amber-50 border-b border-amber-100 px-4 py-3 flex flex-col sm:flex-row items-start sm:items-center justify-between text-sm transition-all duration-300 gap-2 sm:gap-4">
+            <div className="flex items-start sm:items-center gap-2 text-amber-800">
+              <div className="w-2 h-2 bg-amber-500 rounded-full animate-pulse mt-1.5 sm:mt-0 shrink-0"></div>
+              <p className="leading-tight">
+                <span className="font-semibold">Atenção:</span> Seu email ainda não foi verificado. Por favor, verifique sua caixa de entrada.
+              </p>
+            </div>
+
+            <button
+              onClick={handleResendVerificationEmail}
+              disabled={isResending || resendSuccess}
+              className={`shrink-0 cursor-pointer font-medium underline transition-colors ml-4 sm:ml-0 ${resendSuccess
+                ? 'text-green-600 hover:text-green-700 no-underline cursor-default'
+                : 'text-amber-700 hover:text-amber-900 disabled:opacity-50 disabled:cursor-not-allowed'
+                }`}
+            >
+              {isResending ? 'Enviando...' : resendSuccess ? 'Email enviado!' : 'Reenviar email'}
+            </button>
+          </div>
+        )}
+
         {/* Topbar */}
         <header className="h-16 w-full bg-white border-b border-slate-200 flex items-center justify-between px-4 lg:px-8">
           {!isSubscriptionExpired ? (
@@ -247,7 +293,7 @@ export const DashboardLayout: React.FC = () => {
                     <img
                       src={user.avatar}
                       alt="User Avatar"
-                      className="w-9 rounded-full border-2 border-white shadow-md"
+                      className="w-9 h-9 rounded-full border-2 border-white shadow-md object-cover"
                     />
                   </div>
                 ) : (

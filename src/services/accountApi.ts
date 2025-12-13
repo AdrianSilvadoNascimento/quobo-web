@@ -44,6 +44,17 @@ export interface FinanceData {
   }>;
 }
 
+export interface UpdateAccountData {
+  account_id: string;
+  account_user_id: string;
+  name?: string;
+  email?: string;
+  cpf_cnpj?: string;
+  phone_number?: string;
+  birth?: string;
+  type?: string;
+}
+
 export const accountApi = {
   getFinanceData: async (): Promise<FinanceData> => {
     const response = await server.api.get(`/account/finance`);
@@ -51,5 +62,13 @@ export const accountApi = {
   },
   cancelSubscription: async (subscriptionId: string): Promise<void> => {
     await server.api.post(`/subscription/${subscriptionId}/cancel`);
+  },
+  updateAccount: async (data: UpdateAccountData): Promise<any> => {
+    const response = await server.api.put('/account', data);
+    return response.data;
+  },
+  getAccount: async (): Promise<any> => {
+    const response = await server.api.get('/account');
+    return response.data;
   },
 };
