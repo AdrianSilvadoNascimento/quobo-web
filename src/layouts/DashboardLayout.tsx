@@ -293,7 +293,7 @@ export const DashboardLayout: React.FC = () => {
                     <img
                       src={user.avatar}
                       alt="User Avatar"
-                      className="w-9 rounded-full border-2 border-white shadow-md"
+                      className="w-9 h-9 rounded-full border-2 border-white shadow-md object-cover"
                     />
                   </div>
                 ) : (
