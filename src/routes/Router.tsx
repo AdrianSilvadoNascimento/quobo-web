@@ -15,6 +15,7 @@ import { AccountLayout } from '@/features/account/layouts/AccountLayout';
 import { ProfilePage } from '@/features/account/pages/ProfilePage';
 import { FinancePage } from '@/features/account/pages/FinancePage';
 import { CheckoutPage } from '@/features/checkout/pages/CheckoutPage';
+import { CheckoutSuccessPage } from '@/features/checkout/pages/CheckoutSuccessPage';
 import CustomerForm from '@/features/customers/pages/CustomerForm';
 import { AuditsPage } from '@/features/audits/pages/AuditsPage';
 import { NewAuditPage } from '@/features/audits/pages/NewAuditPage';
@@ -42,6 +43,7 @@ export const Router: React.FC = () => {
       <Route path="/forgot-password" element={!isAuthenticated ? <ForgotPassword /> : <Navigate to="/dashboard" />} />
       <Route path="/reset-password" element={!isAuthenticated ? <ResetPassword /> : <Navigate to="/dashboard" />} />
       <Route path="/verify-email" element={<EmailVerificationProcessingPage />} />
+      <Route path="/checkout/success" element={<CheckoutSuccessPage />} />
 
       {/* Protected Routes */}
       {

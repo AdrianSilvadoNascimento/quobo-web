@@ -15,6 +15,7 @@ import { planService } from '../services/plan.service';
 import { CreditCard3D } from './CreditCard3D';
 import { type PlanModel, CreditCardModel } from '../types/plan.model';
 import type { SubscriptionModel, AccountCardModel } from '@/features/account/types/account.model';
+import { getBillingPeriod } from '@/utils/planHelpers';
 
 interface CheckoutModalProps {
   plan: PlanModel;
@@ -303,7 +304,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ plan, isOpen, onCl
                       <p className="font-bold text-xl text-brand-600 flex flex-row items-baseline gap-1">
                         <span className="text-md text-slate-800">R$</span>
                         <span className="text-2xl text-slate-800">{(plan.value / 100).toFixed(2).replace('.', ',')}</span>
-                        <span className="text-xs text-slate-400">/mês</span>
+                        <span className="text-xs text-slate-400">/{getBillingPeriod(plan.interval)}</span>
                       </p>
                     </div>
                   </div>

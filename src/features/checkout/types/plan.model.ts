@@ -10,6 +10,11 @@ export class PlanModel {
   status!: string;
   feature_list!: string[];
   features!: PlanFeaturesModel;
+
+  // New fields for tier-based structure
+  tier?: string; // "FREE", "BRONZE", "PRATA", "OURO"
+  billing_period?: string; // "TRIAL", "MONTHLY", "SEMI_ANNUAL", "ANNUAL"
+  stripe_lookup_key?: string | null; // "bronze_mensal", etc
 }
 
 export class CheckoutModel {

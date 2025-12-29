@@ -84,7 +84,7 @@ const CustomerCard: React.FC<CustomerCardProps> = ({ customer, onDelete }) => {
                   className="text-red-600 hover:bg-red-50"
                 >
                   <Trash2 className="w-4 h-4" />
-                  {isDeleting ? 'Excluindo...' : 'Excluir cliente'}
+                  {isDeleting ? 'Inativando...' : 'Inativar cliente'}
                 </button>
               </li>
             </ul>
@@ -96,10 +96,12 @@ const CustomerCard: React.FC<CustomerCardProps> = ({ customer, onDelete }) => {
             <Mail className="w-4 h-4 text-slate-400" />
             <span>{customer.email}</span>
           </div>
-          <div className="flex items-center gap-3 text-sm text-slate-600">
-            <Phone className="w-4 h-4 text-slate-400" />
-            <span>{customer.phone}</span>
-          </div>
+          {customer.phone && (
+            <div className="flex items-center gap-3 text-sm text-slate-600">
+              <Phone className="w-4 h-4 text-slate-400" />
+              <span>{customer.phone}</span>
+            </div>
+          )}
           <div className="flex items-center gap-3 text-sm text-slate-600">
             <MapPin className="w-4 h-4 text-slate-400" />
             <span>{customer.address?.city}</span>
