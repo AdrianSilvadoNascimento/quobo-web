@@ -29,8 +29,32 @@ export class ItemService {
     }
   }
 
-  async updateItem(item_id: string, data: Partial<ItemModel>): Promise<ItemModel> {
+  async updateItem(item_id: string, data: Partial<ItemModel>, file?: File): Promise<ItemModel> {
     try {
+      // Se houver arquivo, enviar como FormData
+      if (file) {
+        const formData = new FormData();
+
+        // Adicionar o arquivo
+        formData.append('product_image', file);
+
+        // Adicionar os outros campos do item
+        Object.entries(data).forEach(([key, value]) => {
+          if (value !== undefined && value !== null) {
+            formData.append(key, typeof value === 'object' ? JSON.stringify(value) : String(value));
+          }
+        });
+
+        const response = await server.api.put(`/item/${item_id}`, formData, {
+          withCredentials: true,
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        });
+        return response.data;
+      }
+
+      // Se não houver arquivo, enviar como JSON normal
       const response = await server.api.put(`/item/${item_id}`, data, { withCredentials: true });
       return response.data;
     } catch (error) {

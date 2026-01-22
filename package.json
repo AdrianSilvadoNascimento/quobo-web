@@ -23,6 +23,7 @@
     "date-fns": "^4.1.0",
     "lucide-react": "^0.554.0",
     "payment-token-efi": "^3.2.1",
+    "qrcode.react": "^4.2.0",
     "react": "^19.2.1",
     "react-dom": "^19.2.1",
     "react-pro-sidebar": "^1.1.0",

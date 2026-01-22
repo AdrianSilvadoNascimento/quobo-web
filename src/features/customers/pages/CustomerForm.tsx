@@ -218,7 +218,7 @@ const CustomerForm: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-10">
+    <div className="space-y-6 mx-auto pb-10">
       <AlertModal
         isOpen={alertModal.isOpen}
         onClose={closeAlert}

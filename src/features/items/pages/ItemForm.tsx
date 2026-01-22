@@ -30,6 +30,7 @@ export const ItemForm: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const [categories, setCategories] = useState<CategoryModel[]>([]);
   const [units, setUnits] = useState<UnitOfMeasureModel[]>([]);
@@ -137,6 +138,10 @@ export const ItemForm: React.FC = () => {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Armazenar o arquivo para upload
+      setSelectedFile(file);
+
+      // Criar preview
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result as string);
@@ -172,7 +177,8 @@ export const ItemForm: React.FC = () => {
       }
 
       if (id) {
-        await item_service.updateItem(id, payload);
+        // Ao atualizar, passar o arquivo se houver
+        await item_service.updateItem(id, payload, selectedFile || undefined);
       } else {
         await item_service.createItem(payload);
       }
@@ -385,7 +391,10 @@ export const ItemForm: React.FC = () => {
                   )}
                   <button
                     type="button"
-                    onClick={() => setImagePreview(null)}
+                    onClick={() => {
+                      setImagePreview(null);
+                      setSelectedFile(null);
+                    }}
                     className="cursor-pointer absolute top-2 right-2 p-1.5 bg-white/90 text-red-500 rounded-full shadow-sm hover:bg-white transition-all opacity-100 md:opacity-0 group-hover:md:opacity-100"
                   >
                     <X className="w-4 h-4" />

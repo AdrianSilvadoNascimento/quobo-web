@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { CheckCircle, XCircle, Loader2, ArrowRight, Sparkles } from 'lucide-react';
 import { planService } from '../services/plan.service';
+import { useAuth } from '@/contexts/AuthContext';
 import QuoboIcon from '@/assets/quobo-icon.svg';
 
 type PageState = 'loading' | 'success' | 'error';
@@ -11,6 +12,7 @@ export const CheckoutSuccessPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { updateSubscriptionStatus } = useAuth();
   const [state, setState] = useState<PageState>('loading');
   const [sessionData, setSessionData] = useState<{
     id: string;
@@ -38,6 +40,9 @@ export const CheckoutSuccessPage: React.FC = () => {
           // Invalidar cache para atualizar frontend automaticamente
           queryClient.invalidateQueries({ queryKey: ['finance'] });
           queryClient.invalidateQueries({ queryKey: ['auth'] });
+
+          // CRÍTICO: Atualizar contexto de autenticação para fechar modal de assinatura expirada
+          updateSubscriptionStatus();
         } else {
           setState('error');
         }
@@ -48,7 +53,7 @@ export const CheckoutSuccessPage: React.FC = () => {
     };
 
     verifySession();
-  }, [searchParams, queryClient]);
+  }, [searchParams, queryClient, updateSubscriptionStatus]);
 
   const handleGoToDashboard = () => {
     navigate('/dashboard');

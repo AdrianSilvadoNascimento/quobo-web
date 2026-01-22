@@ -152,6 +152,7 @@ export const DashboardLayout: React.FC = () => {
                     />
                   }
                   onClick={() => {
+                    if (isSubscriptionExpired) return;
                     navigate(item.path);
                     setToggled(false);
                   }}
@@ -359,7 +360,7 @@ export const DashboardLayout: React.FC = () => {
 
         {/* Scrollable Content Area */}
         <main className="flex-1 overflow-x-hidden overflow-y-auto bg-slate-50 p-4 lg:p-8">
-          <div className="max-w-7xl mx-auto">
+          <div className="mx-auto">
             <Outlet />
           </div>
         </main>

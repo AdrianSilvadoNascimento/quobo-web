@@ -174,26 +174,17 @@ export const FinancePage: React.FC = () => {
                 onClick={handleViewPlans}
                 className="btn btn-primary bg-gradient-to-br from-[#22B8E6] via-[#2563EB] to-[#1E40AF] text-white font-bold rounded-lg w-full transition-transform hover:scale-[1.02]"
               >
-                Ver Planos
+                {formattedSubscription?.isCanceled ? 'Reativar Assinatura' : 'Ver Planos'}
               </button>
 
               {!formattedSubscription?.isCanceled && !formattedSubscription?.is_expired && (
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    onClick={handleUpdateCard}
-                    className="btn btn-outline btn-sm text-slate-600 hover:bg-slate-50 border-slate-300 w-full"
-                    title="Atualizar forma de pagamento"
-                  >
-                    <CreditCard className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => setIsCancelModalOpen(true)}
-                    className="btn btn-outline btn-sm text-red-600 hover:bg-red-50 hover:border-red-200 border-slate-200 w-full"
-                    title="Cancelar assinatura"
-                  >
-                    Cancelar
-                  </button>
-                </div>
+                <button
+                  onClick={() => setIsCancelModalOpen(true)}
+                  className="btn btn-outline btn-sm text-red-600 hover:bg-red-50 hover:border-red-200 border-slate-200 w-full"
+                  title="Cancelar assinatura"
+                >
+                  Cancelar
+                </button>
               )}
             </div>
           </div>
@@ -272,81 +263,81 @@ export const FinancePage: React.FC = () => {
                 {formattedInvoices.length > 0 ? (
                   formattedInvoices.map((invoice) => (
                     <React.Fragment key={invoice.id}>
-                    <tr key={invoice.id} className="hover:bg-slate-50 transition-colors">
-                      <td className="px-6 py-4 font-medium text-slate-800">{invoice.dateFormatted}</td>
-                      <td className="px-6 py-4">{invoice.plan_name}</td>
-                      <td className="px-6 py-4">{invoice.amountFormatted}</td>
-                      <td className="px-6 py-4 text-center">
-                        {invoice.status === 'paid' ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-100">
-                            <CheckCircle className="w-3 h-3" /> Pago
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-50 text-orange-700 border border-orange-100">
-                            <Clock className="w-3 h-3" /> Pendente
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <button
-                          onClick={() => invoice.invoice_pdf && window.open(invoice.invoice_pdf, '_blank')}
-                          disabled={!invoice.invoice_pdf}
-                          className="cursor-pointer inline-flex items-center gap-1 text-slate-400 hover:text-brand-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                          title={invoice.invoice_pdf ? 'Baixar PDF' : 'PDF não disponível'}
-                        >
-                          <Download className="w-4 h-4" />
-                          <span className="hidden sm:inline">PDF</span>
-                        </button>
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        {invoice.status !== 'paid' && (
+                      <tr key={invoice.id} className="hover:bg-slate-50 transition-colors">
+                        <td className="px-6 py-4 font-medium text-slate-800">{invoice.dateFormatted}</td>
+                        <td className="px-6 py-4">{invoice.plan_name}</td>
+                        <td className="px-6 py-4">{invoice.amountFormatted}</td>
+                        <td className="px-6 py-4 text-center">
+                          {invoice.status === 'paid' ? (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-100">
+                              <CheckCircle className="w-3 h-3" /> Pago
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-50 text-orange-700 border border-orange-100">
+                              <Clock className="w-3 h-3" /> Pendente
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 text-right">
                           <button
-                            onClick={async () => {
-                              setRetryingInvoice(invoice.id);
-                              try {
-                                const result = await accountApi.retryInvoicePayment(invoice.id);
-                                if (result.success) {
-                                  alert(result.message);
-                                  refetch();
-                                } else {
-                                  alert(result.message);
-                                }
-                              } catch (error) {
-                                alert('Erro ao tentar novamente');
-                              } finally {
-                                setRetryingInvoice(null);
-                              }
-                            }}
-                            disabled={retryingInvoice === invoice.id}
-                            className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-brand-600 hover:text-brand-700 hover:bg-brand-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                            title="Tentar pagamento novamente"
+                            onClick={() => invoice.invoice_pdf && window.open(invoice.invoice_pdf, '_blank')}
+                            disabled={!invoice.invoice_pdf}
+                            className="cursor-pointer inline-flex items-center gap-1 text-slate-400 hover:text-brand-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            title={invoice.invoice_pdf ? 'Baixar PDF' : 'PDF não disponível'}
                           >
-                            <RefreshCw className={`w-3.5 h-3.5 ${retryingInvoice === invoice.id ? 'animate-spin' : ''}`} />
-                            <span>{retryingInvoice === invoice.id ? 'Processando...' : 'Tentar Novamente'}</span>
+                            <Download className="w-4 h-4" />
+                            <span className="hidden sm:inline">PDF</span>
                           </button>
-                        )}
-                      </td>
-                    </tr>
-                    {
-                      invoice.error_message && (
-                        <tr>
-                          <td colSpan={6} className="px-6 py-2 bg-red-50">
-                            <div className="flex items-start gap-2 text-sm text-red-700">
-                              <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                              <span><strong>Erro:</strong> {invoice.error_message}</span>
-                            </div>
-                          </td>
-                        </tr>
-                      )
-                    }
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          {invoice.status !== 'paid' && (
+                            <button
+                              onClick={async () => {
+                                setRetryingInvoice(invoice.id);
+                                try {
+                                  const result = await accountApi.retryInvoicePayment(invoice.id);
+                                  if (result.success) {
+                                    alert(result.message);
+                                    refetch();
+                                  } else {
+                                    alert(result.message);
+                                  }
+                                } catch (error) {
+                                  alert('Erro ao tentar novamente');
+                                } finally {
+                                  setRetryingInvoice(null);
+                                }
+                              }}
+                              disabled={retryingInvoice === invoice.id}
+                              className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-brand-600 hover:text-brand-700 hover:bg-brand-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                              title="Tentar pagamento novamente"
+                            >
+                              <RefreshCw className={`w-3.5 h-3.5 ${retryingInvoice === invoice.id ? 'animate-spin' : ''}`} />
+                              <span>{retryingInvoice === invoice.id ? 'Processando...' : 'Tentar Novamente'}</span>
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                      {
+                        invoice.error_message && (
+                          <tr>
+                            <td colSpan={6} className="px-6 py-2 bg-red-50">
+                              <div className="flex items-start gap-2 text-sm text-red-700">
+                                <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                                <span><strong>Erro:</strong> {invoice.error_message}</span>
+                              </div>
+                            </td>
+                          </tr>
+                        )
+                      }
                     </React.Fragment>
                   ))
                 ) : (
-                <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center text-slate-500">
-                    Nenhuma fatura encontrada
-                  </td>
-                </tr>
+                  <tr>
+                    <td colSpan={6} className="px-6 py-8 text-center text-slate-500">
+                      Nenhuma fatura encontrada
+                    </td>
+                  </tr>
                 )}
               </tbody>
             </table>

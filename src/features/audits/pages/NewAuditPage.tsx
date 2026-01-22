@@ -7,6 +7,7 @@ import { AuditStockType } from '../types/audit.model';
 import { audit_service } from '../services/audit.service';
 import { useAuth } from '@/contexts/AuthContext';
 import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
+import { AlertModal } from '@/components/AlertModal';
 
 import { item_service } from '@/features/items/services/items.service';
 import { AlertCircle } from 'lucide-react';
@@ -19,6 +20,17 @@ export const NewAuditPage: React.FC = () => {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [hasProducts, setHasProducts] = useState<boolean | null>(null);
   const [showNoProductsModal, setShowNoProductsModal] = useState(false);
+
+  // Error handling
+  const [errorModal, setErrorModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+  }>({
+    isOpen: false,
+    title: '',
+    message: ''
+  });
 
   // Categories Infinite Scroll & Search
   const [searchQuery, setSearchQuery] = useState('');
@@ -98,6 +110,35 @@ export const NewAuditPage: React.FC = () => {
     );
   };
 
+  const parseErrorMessage = (error: any): { title: string; message: string } => {
+    // Check if it's an Axios error with response data
+    if (error.response?.data) {
+      const { message, error: errorType } = error.response.data;
+
+      // Handle validation errors
+      if (Array.isArray(message)) {
+        return {
+          title: 'Erro de Validação',
+          message: message.join('\n')
+        };
+      }
+
+      // Handle custom error messages
+      if (typeof message === 'string') {
+        return {
+          title: errorType || 'Erro ao Criar Auditoria',
+          message
+        };
+      }
+    }
+
+    // Default error
+    return {
+      title: 'Erro ao Criar Auditoria',
+      message: 'Ocorreu um erro inesperado ao criar a auditoria. Por favor, tente novamente.'
+    };
+  };
+
   const handleStartAudit = async () => {
     if (!selectedType) return;
     if (selectedType === AuditStockType.CYCLIC && selectedCategories.length === 0) return;
@@ -124,9 +165,14 @@ export const NewAuditPage: React.FC = () => {
 
     } catch (error) {
       console.error('Failed to create audit', error);
+      const { title, message } = parseErrorMessage(error);
+      setErrorModal({
+        isOpen: true,
+        title,
+        message
+      });
       setIsSubmitting(false);
       setLoadingStep('');
-      // Show error toast here ideally
     }
   };
 
@@ -372,6 +418,16 @@ export const NewAuditPage: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Error Modal */}
+      <AlertModal
+        isOpen={errorModal.isOpen}
+        onClose={() => setErrorModal({ isOpen: false, title: '', message: '' })}
+        title={errorModal.title}
+        message={errorModal.message}
+        type="error"
+        confirmText="Entendi"
+      />
     </div>
   );
 };

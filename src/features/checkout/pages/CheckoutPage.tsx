@@ -6,6 +6,7 @@ import { Check, Star, Shield, Zap, HelpCircle, Lightbulb } from 'lucide-react';
 import type { PlanModel } from '@/features/checkout/types/plan.model';
 
 import { planService } from '../services/plan.service';
+import { PlanConfirmationModal } from '../components/PlanConfirmationModal';
 import QuoboIcon from '@/assets/quobo-icon.svg';
 
 const APP_URL = import.meta.env.VITE_APP_URL;
@@ -47,6 +48,8 @@ const TIER_CONFIG: Record<string, { gradient: string; button: string; badge: str
 
 export const CheckoutPage: React.FC<CheckoutPageProps> = ({ withHeader = false }) => {
   const [selectedPeriod, setSelectedPeriod] = useState<BillingPeriod>('MONTHLY');
+  const [selectedPlan, setSelectedPlan] = useState<PlanModel | null>(null);
+  const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
 
   const { data: allPlans = [], isLoading } = useQuery({
     queryKey: ['plan'],
@@ -67,10 +70,17 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ withHeader = false }
       return tierA - tierB;
     });
 
-  const handleSelectPlan = async (plan: PlanModel) => {
+  const handleSelectPlan = (plan: PlanModel) => {
+    setSelectedPlan(plan);
+  };
+
+  const handleConfirmPlan = async () => {
+    if (!selectedPlan) return;
+
     try {
+      setIsCheckoutLoading(true);
       const { sessionUrl } = await planService.createCheckoutSession(
-        plan.id,
+        selectedPlan.id,
         `${APP_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
         window.location.href
       );
@@ -81,6 +91,13 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ withHeader = false }
     } catch (error) {
       console.error('Erro ao iniciar checkout:', error);
       alert('Não foi possível iniciar o checkout. Tente novamente.');
+      setIsCheckoutLoading(false);
+    }
+  };
+
+  const handleCloseModal = () => {
+    if (!isCheckoutLoading) {
+      setSelectedPlan(null);
     }
   };
 
@@ -112,7 +129,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ withHeader = false }
     <div className="min-h-full bg-slate-50/50">
       {withHeader && (
         <header className="bg-white border-b border-slate-200 py-4 px-6 mb-8">
-          <div className="max-w-7xl mx-auto flex items-center gap-2 font-bold text-2xl text-brand-700">
+          <div className="mx-auto flex items-center gap-2 font-bold text-2xl text-brand-700">
             <div className="flex items-center justify-center border-2 border-white shadow-md w-10 h-10 rounded-full bg-gradient-to-br from-[#22B8E6] via-[#2563EB] to-[#1E40AF]">
               <img src={QuoboIcon} alt="Quobo Logo" className="w-8 h-auto" />
             </div>
@@ -121,7 +138,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ withHeader = false }
         </header>
       )}
 
-      <div className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${!withHeader ? 'py-12' : 'pb-12'}`}>
+      <div className={`mx-auto px-4 sm:px-6 lg:px-8 ${!withHeader ? 'py-12' : 'pb-12'}`}>
         {/* Header */}
         <div className="text-center mb-10">
           <h2 className="text-brand-600 font-semibold tracking-wide uppercase text-sm mb-2">Planos e Preços</h2>
@@ -250,6 +267,17 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ withHeader = false }
             </div>
           )}
         </div>
+
+        {/* Plan Confirmation Modal */}
+        {selectedPlan && (
+          <PlanConfirmationModal
+            plan={selectedPlan}
+            isOpen={!!selectedPlan}
+            onClose={handleCloseModal}
+            onConfirm={handleConfirmPlan}
+            isLoading={isCheckoutLoading}
+          />
+        )}
 
         {/* FAQ Section */}
         <div className="max-w-3xl mx-auto">
