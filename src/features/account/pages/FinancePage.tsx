@@ -344,7 +344,7 @@ export const FinancePage: React.FC = () => {
           </div>
           {formattedInvoices.length > 0 && (
             <div className="p-4 border-t border-slate-100 bg-slate-50 text-center text-xs text-slate-500">
-              Mostrando as últimas {formattedInvoices.length} faturas. <button className="text-brand-600 hover:underline">Ver todas</button>
+              Mostrando as últimas {formattedInvoices.length} faturas.
             </div>
           )}
         </div>

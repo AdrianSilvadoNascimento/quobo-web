@@ -18,6 +18,7 @@ interface AuthContextType {
   expirationDate: Date | null;
   isSubscriptionExpired: boolean;
   updateSubscriptionStatus: () => void;
+  isAdmin: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -148,6 +149,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const isSubscriptionExpired = (expirationDays !== null && expirationDays <= 0 && !isAssinant);
+  const isAdmin = user?.type === 'OWNER' || user?.type === 'ADMIN';
 
   const updateSubscriptionStatus = async () => {
     if (isRefreshing.current) return;
@@ -182,7 +184,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       isAssinant,
       expirationDate,
       isSubscriptionExpired,
-      updateSubscriptionStatus
+      updateSubscriptionStatus,
+      isAdmin
     }}>
       {children}
     </AuthContext.Provider>

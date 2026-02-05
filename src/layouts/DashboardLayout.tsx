@@ -24,7 +24,7 @@ import { useSubscriptionSocket } from '../hooks/useSubscriptionSocket';
 import { authService } from '@/features/auth/services/auth.service';
 
 export const DashboardLayout: React.FC = () => {
-  const { logout, user, account, expirationDays, isTrial, subscription, isSubscriptionExpired, updateSubscriptionStatus } = useAuth();
+  const { logout, user, account, expirationDays, isTrial, subscription, isSubscriptionExpired, updateSubscriptionStatus, isAdmin } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
   const [toggled, setToggled] = useState(false);
   const [modalDismissed, setModalDismissed] = useState(false);
@@ -69,6 +69,7 @@ export const DashboardLayout: React.FC = () => {
     { label: 'Movimentações', icon: ArrowLeftRight, path: '/movements' },
     { label: 'Categorias', icon: Tag, path: '/categories' },
     { label: 'Clientes', icon: Users, path: '/customers' },
+    ...(subscription?.plan?.features?.team_features?.enabled ? [{ label: 'Time', icon: User, path: '/team' }] : []),
     { label: 'Auditorias', icon: ClipboardCheck, path: '/audits' },
   ];
 
@@ -330,12 +331,14 @@ export const DashboardLayout: React.FC = () => {
                     Minha Conta
                   </Link>
                 </li>
-                <li>
-                  <Link to="/account/finance" className="flex items-center gap-2 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-brand-600">
-                    <CreditCard className="w-4 h-4" />
-                    Financeiro
-                  </Link>
-                </li>
+                {(isAdmin) && (
+                  <li>
+                    <Link to="/account/finance" className="flex items-center gap-2 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-brand-600">
+                      <CreditCard className="w-4 h-4" />
+                      Financeiro
+                    </Link>
+                  </li>
+                )}
                 <li>
                   <Link to="/settings" className="flex items-center gap-2 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-brand-600">
                     <Settings className="w-4 h-4" />

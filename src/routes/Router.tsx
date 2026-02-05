@@ -7,6 +7,8 @@ import { RegisterPage } from '../features/auth/pages/RegisterPage';
 import { DashboardPage } from '../features/dashboard/pages/DashboardPage';
 import { MovementsPage } from '../features/movements/pages/MovementsPage';
 import { CustomersPage } from '../features/customers/pages/CustomersPage';
+import { TeamPage } from '@/features/team/pages/TeamPage';
+import { InviteAcceptPage } from '@/features/team/pages/InviteAcceptPage';
 import { DashboardLayout } from '../layouts/DashboardLayout';
 import { ItemsPage } from '../features/items/pages/ItemsPage';
 import { ItemForm } from '../features/items/pages/ItemForm';
@@ -25,7 +27,7 @@ import ResetPassword from '@/features/auth/pages/ResetPassword';
 import { EmailVerificationProcessingPage } from '@/features/auth/pages/EmailVerificationProcessingPage';
 
 export const Router: React.FC = () => {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
 
   if (isLoading) {
     return (
@@ -45,6 +47,9 @@ export const Router: React.FC = () => {
       <Route path="/verify-email" element={<EmailVerificationProcessingPage />} />
       <Route path="/checkout/success" element={<CheckoutSuccessPage />} />
 
+      {/* Invite Accept - Always public, regardless of auth status */}
+      <Route path="/invite/accept/:token" element={<InviteAcceptPage />} />
+
       {/* Protected Routes */}
       {
         isAuthenticated ? (
@@ -61,6 +66,8 @@ export const Router: React.FC = () => {
             <Route path="/customers/new" element={<CustomerForm />} />
             <Route path="/customers/:id" element={<CustomerForm />} />
 
+            <Route path="/team" element={<TeamPage />} />
+
             <Route path="/categories" element={<CategoriesPage />} />
 
             {/* Audits Routes */}
@@ -76,7 +83,12 @@ export const Router: React.FC = () => {
             <Route path="/account" element={<AccountLayout />}>
               <Route index element={<Navigate to="profile" replace />} />
               <Route path="profile" element={<ProfilePage />} />
-              <Route path="finance" element={<FinancePage />} />
+              {/* Finance page is admin-only */}
+              <Route path="finance" element={
+                user?.type === 'OWNER' || user?.type === 'ADMIN'
+                  ? <FinancePage />
+                  : <Navigate to="/account/profile" replace />
+              } />
             </Route>
 
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
