@@ -1,5 +1,5 @@
 import React from 'react';
-import { Mail, RefreshCw, Trash2, Clock, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
+import { Mail, RefreshCw, Trash2, Clock, AlertCircle, CheckCircle } from 'lucide-react';
 import { InviteStatus, AccountUserRole } from '../types/team.types';
 import type { Invite } from '../types/team.types';
 import { format } from 'date-fns';
