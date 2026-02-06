@@ -1,14 +1,16 @@
 import React from 'react';
-import { User, CheckCircle, Clock } from 'lucide-react';
+import { User, CheckCircle, Clock, Pencil } from 'lucide-react';
 import { AccountUserRole, AccountUserType } from '../types/team.types';
 import type { TeamMember } from '../types/team.types';
 
 interface UserListProps {
   members: TeamMember[];
   isLoading: boolean;
+  isAdminOrOwner?: boolean;
+  onEdit?: (member: TeamMember) => void;
 }
 
-export const UserList: React.FC<UserListProps> = ({ members, isLoading }) => {
+export const UserList: React.FC<UserListProps> = ({ members, isLoading, isAdminOrOwner, onEdit }) => {
   if (isLoading) {
     return (
       <div className="flex justify-center py-10">
@@ -62,6 +64,9 @@ export const UserList: React.FC<UserListProps> = ({ members, isLoading }) => {
             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo</th>
             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Entrou em</th>
+            {isAdminOrOwner && (
+              <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
+            )}
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-200">
@@ -94,6 +99,19 @@ export const UserList: React.FC<UserListProps> = ({ members, isLoading }) => {
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                 {new Date(member.created_at).toLocaleDateString('pt-BR')}
               </td>
+              {isAdminOrOwner && (
+                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  {member.type !== AccountUserType.OWNER && (
+                    <button
+                      onClick={() => onEdit?.(member)}
+                      className="cursor-pointer text-blue-600 hover:text-blue-900 p-1.5 rounded hover:bg-blue-50 transition-colors tooltip tooltip-left"
+                      data-tip="Editar acesso"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </button>
+                  )}
+                </td>
+              )}
             </tr>
           ))}
         </tbody>

@@ -67,3 +67,9 @@ export interface InviteStats {
   cancelled_invites: number;
   rejected_invites: number;
 }
+
+export interface UpdateMemberAccessData {
+  type?: AccountUserType;
+  role?: AccountUserRole;
+}
+

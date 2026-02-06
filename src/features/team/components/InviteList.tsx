@@ -1,5 +1,5 @@
 import React from 'react';
-import { Mail, RefreshCw, Trash2, Clock, AlertCircle, CheckCircle } from 'lucide-react';
+import { Mail, RefreshCw, Trash2, Clock, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
 import { InviteStatus, AccountUserRole } from '../types/team.types';
 import type { Invite } from '../types/team.types';
 import { format } from 'date-fns';
@@ -12,6 +12,8 @@ interface InviteListProps {
   onResend: (id: string) => void;
   isCancelling?: boolean;
   isResending?: boolean;
+  cancellingId?: string | null;
+  resendingId?: string | null;
 }
 
 export const InviteList: React.FC<InviteListProps> = ({
@@ -20,7 +22,9 @@ export const InviteList: React.FC<InviteListProps> = ({
   onCancel,
   onResend,
   isCancelling,
-  isResending
+  isResending,
+  cancellingId,
+  resendingId
 }) => {
   if (isLoading) {
     return (
@@ -99,19 +103,27 @@ export const InviteList: React.FC<InviteListProps> = ({
                   <div className="flex justify-end gap-2">
                     <button
                       onClick={() => onResend(invite.id)}
-                      disabled={isResending}
-                      className="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50 transition-colors tooltip tooltip-left"
+                      disabled={isResending || isCancelling}
+                      className="cursor-pointer text-blue-600 hover:text-blue-900 p-1.5 rounded hover:bg-blue-50 transition-colors tooltip tooltip-left disabled:opacity-50 disabled:cursor-not-allowed"
                       data-tip="Reenviar convite"
                     >
-                      <RefreshCw className="w-4 h-4" />
+                      {resendingId === invite.id ? (
+                        <span className="w-4 h-4 loading loading-spinner" />
+                      ) : (
+                        <RefreshCw className="w-4 h-4" />
+                      )}
                     </button>
                     <button
                       onClick={() => onCancel(invite.id)}
-                      disabled={isCancelling}
-                      className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50 transition-colors tooltip tooltip-left"
+                      disabled={isCancelling || isResending}
+                      className="cursor-pointer text-red-600 hover:text-red-900 p-1.5 rounded hover:bg-red-50 transition-colors tooltip tooltip-left disabled:opacity-50 disabled:cursor-not-allowed"
                       data-tip="Cancelar convite"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      {cancellingId === invite.id ? (
+                        <span className="w-4 h-4 loading loading-spinner" />
+                      ) : (
+                        <Trash2 className="w-4 h-4" />
+                      )}
                     </button>
                   </div>
                 )}

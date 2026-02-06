@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { membersService } from '../services/members.service';
 import { useAuth } from '@/contexts/AuthContext';
-import type { CreateInviteData } from '../types/team.types';
+import type { CreateInviteData, UpdateMemberAccessData } from '../types/team.types';
 
 export const useTeamMutations = () => {
   const queryClient = useQueryClient();
@@ -32,9 +32,19 @@ export const useTeamMutations = () => {
     },
   });
 
+  const updateMemberAccess = useMutation({
+    mutationFn: ({ memberId, data }: { memberId: string; data: UpdateMemberAccessData }) =>
+      membersService.updateMemberAccess(memberId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['members', accountId] });
+    },
+  });
+
   return {
     createInvite,
     cancelInvite,
     resendInvite,
+    updateMemberAccess,
   };
 };
+
