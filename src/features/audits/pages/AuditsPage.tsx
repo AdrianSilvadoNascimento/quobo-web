@@ -1,7 +1,7 @@
-import React, { useCallback, useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Search, ClipboardCheck, X, SlidersHorizontal } from 'lucide-react';
-import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
+import { useInfiniteQuery } from '@tanstack/react-query';
 import { audit_service } from '../services/audit.service';
 import type { ItemAuditModel } from '../types/audit.model';
 import { InfiniteScrollList } from '../components/infiniteScroll';
@@ -20,19 +20,39 @@ export const AuditsPage: React.FC = () => {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  const fetchAudits = useCallback((page: number, limit: number) => {
-    return audit_service.getAudits(page, limit, debouncedSearch);
-  }, [debouncedSearch]);
-
   const {
-    data: audits,
-    loading,
-    hasMore,
-    loadMore
-  } = useInfiniteScroll<ItemAuditModel>({
-    fetchFunction: fetchAudits,
-    limit: 20
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetching,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
+    queryKey: ['audits', 'infinite', debouncedSearch],
+    queryFn: async ({ pageParam = 0 }) => {
+      return audit_service.getAudits(pageParam, 20, debouncedSearch);
+    },
+    getNextPageParam: (lastPage, _allPages) => {
+      if (lastPage.next) {
+        return _allPages.length;
+      }
+      return undefined;
+    },
+    initialPageParam: 0,
   });
+
+  // Combine all pages into a single array
+  const audits = useMemo(() => {
+    return data?.pages.flatMap(page => page.data) ?? [];
+  }, [data]);
+
+  const loading = isFetching && !isFetchingNextPage;
+  const hasMore = hasNextPage ?? false;
+
+  const loadMore = () => {
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  };
 
   const handleClearSearch = () => {
     setSearchQuery('');

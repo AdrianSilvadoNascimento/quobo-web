@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
+import { useEffect, useRef, useState, useMemo } from "react";
+import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -12,6 +12,7 @@ import { CategoryModal } from "../components/CategoryModal";
 import { InfiniteCategoryCards } from "../components/InfiniteCards";
 
 export const CategoriesPage: React.FC = () => {
+  const queryClient = useQueryClient();
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<CategoryModel | null>(null);
@@ -26,20 +27,43 @@ export const CategoriesPage: React.FC = () => {
 
   const { account } = useAuth();
 
-  const fetchProducts = useCallback((page: number, limit: number) => {
-    return category_service.getPaginatedCategories(page, limit)
-  }, [])
-
   const {
-    data: categories,
-    loading,
-    hasMore,
-    loadMore,
-    refresh,
-  } = useInfiniteScroll<CategoryModel>({
-    fetchFunction: fetchProducts,
-    limit: 40,
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetching,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
+    queryKey: ['categories', 'infinite'],
+    queryFn: async ({ pageParam = 0 }) => {
+      return category_service.getPaginatedCategories(pageParam, 40);
+    },
+    getNextPageParam: (lastPage, _allPages) => {
+      if (lastPage.next) {
+        return _allPages.length;
+      }
+      return undefined;
+    },
+    initialPageParam: 0,
   });
+
+  // Combine all pages into a single array
+  const categories = useMemo(() => {
+    return data?.pages.flatMap(page => page.data) ?? [];
+  }, [data]);
+
+  const loading = isFetching && !isFetchingNextPage;
+  const hasMore = hasNextPage ?? false;
+
+  const loadMore = () => {
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  };
+
+  const refresh = () => {
+    queryClient.invalidateQueries({ queryKey: ['categories'] });
+  };
 
   const performSearch = async (term: string) => {
     if (!term.trim()) {

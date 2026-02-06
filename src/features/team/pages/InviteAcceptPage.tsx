@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { Lock, User, Mail, Building2, Shield, Clock, CheckCircle2, XCircle, AlertCircle, Users } from 'lucide-react';
 import { publicInviteService } from '../services/public-invite.service';
 import type { InviteValidationResponse } from '../services/public-invite.service';
@@ -20,7 +20,6 @@ type PageState = 'loading' | 'valid' | 'invalid' | 'expired' | 'accepted' | 'err
 
 export const InviteAcceptPage: React.FC = () => {
   const { token } = useParams<{ token: string }>();
-  const _navigate = useNavigate();
   const containerRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });

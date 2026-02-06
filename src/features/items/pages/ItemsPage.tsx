@@ -1,8 +1,8 @@
-import React, { useCallback, useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Plus, X, SlidersHorizontal, Package } from 'lucide-react';
+import { useInfiniteQuery } from '@tanstack/react-query';
 import { item_service } from '../services/items.service';
-import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 import { useAuth } from '@/contexts/AuthContext';
 import type { ItemModel } from '../types/item.model';
 import { useDebounce } from '@/hooks/useDebounce';
@@ -20,19 +20,40 @@ export const ItemsPage: React.FC = () => {
 
   const { account } = useAuth();
 
-  const fetchProducts = useCallback((page: number, limit: number) => {
-    return item_service.getProducts(page, limit)
-  }, [])
-
   const {
-    data: products,
-    loading,
-    hasMore,
-    loadMore,
-  } = useInfiniteScroll<ItemModel>({
-    fetchFunction: fetchProducts,
-    limit: 40,
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetching,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
+    queryKey: ['items', 'infinite'],
+    queryFn: async ({ pageParam = 0 }) => {
+      return item_service.getProducts(pageParam, 40);
+    },
+    getNextPageParam: (lastPage, _allPages) => {
+      // Se há mais itens, retorna a próxima página
+      if (lastPage.next) {
+        return _allPages.length;
+      }
+      return undefined;
+    },
+    initialPageParam: 0,
   });
+
+  // Combine all pages into a single array
+  const products = useMemo(() => {
+    return data?.pages.flatMap(page => page.data) ?? [];
+  }, [data]);
+
+  const loading = isFetching && !isFetchingNextPage;
+  const hasMore = hasNextPage ?? false;
+
+  const loadMore = () => {
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  };
 
   const performSearch = async (term: string) => {
     if (!term.trim()) {

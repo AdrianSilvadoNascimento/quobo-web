@@ -1,6 +1,6 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { Plus, TrendingUp, Loader2, List, BarChart3, Search, X, SlidersHorizontal, Filter, ChevronDown, ArrowLeftRight } from 'lucide-react';
-import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
+import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import { useDebounce } from '@/hooks/useDebounce';
 import { movement_service } from '../services/movement.service';
 import type { MovementModel, MovementType } from '../types/movement.model';
@@ -16,6 +16,7 @@ interface MovementTypeProp {
 }
 
 export const MovementsPage: React.FC = () => {
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<TabType>('list');
   const [searchQuery, setSearchQuery] = useState('');
   const [movementType, setMovementType] = useState<MovementTypeProp>({ value: '', label: 'Todos os Tipos' });
@@ -34,20 +35,43 @@ export const MovementsPage: React.FC = () => {
     { value: 'SALE', label: 'Venda' },
   ];
 
-  const fetchMovements = useCallback((page: number, limit: number) => {
-    return movement_service.getMovements(page, limit);
-  }, []);
-
   const {
-    data: movements,
-    loading,
-    hasMore,
-    loadMore,
-    refresh,
-  } = useInfiniteScroll<MovementModel>({
-    fetchFunction: fetchMovements,
-    limit: 40,
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetching,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
+    queryKey: ['movements', 'infinite'],
+    queryFn: async ({ pageParam = 0 }) => {
+      return movement_service.getMovements(pageParam, 40);
+    },
+    getNextPageParam: (lastPage, _allPages) => {
+      if (lastPage.next) {
+        return _allPages.length;
+      }
+      return undefined;
+    },
+    initialPageParam: 0,
   });
+
+  // Combine all pages into a single array
+  const movements = useMemo(() => {
+    return data?.pages.flatMap(page => page.data) ?? [];
+  }, [data]);
+
+  const loading = isFetching && !isFetchingNextPage;
+  const hasMore = hasNextPage ?? false;
+
+  const loadMore = () => {
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  };
+
+  const refresh = () => {
+    queryClient.invalidateQueries({ queryKey: ['movements'] });
+  };
 
   const filteredMovements = movementType.value
     ? movements.filter(m => m.move_type === movementType.value)
