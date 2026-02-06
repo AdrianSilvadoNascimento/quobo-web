@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { viaCepService, type ViaCepResponse } from '../services/viacep.service';
 import { onboardingService, type CompleteOnboardingRequest } from '../services/onboarding.service';
 import { AlertModal, type AlertType } from '@/components/AlertModal';
+import { Button } from '@/components/ui';
 
 interface FormData {
   // Account
@@ -345,13 +346,9 @@ export const OnboardingForm: React.FC = () => {
             </div>
 
             <div className="flex justify-end">
-              <button
-                type="button"
-                onClick={handleNext}
-                className="btn btn-primary"
-              >
+              <Button type="button" onClick={handleNext}>
                 Próximo
-              </button>
+              </Button>
             </div>
           </div>
         )}
@@ -473,20 +470,12 @@ export const OnboardingForm: React.FC = () => {
             </div>
 
             <div className="flex justify-between gap-4 mt-6">
-              <button
-                type="button"
-                onClick={handleBack}
-                className="btn btn-ghost"
-              >
+              <Button variant="secondary" type="button" onClick={handleBack}>
                 Voltar
-              </button>
-              <button
-                type="submit"
-                className="btn btn-primary"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? 'Salvando...' : 'Concluir Cadastro'}
-              </button>
+              </Button>
+              <Button type="submit" isLoading={isSubmitting}>
+                Concluir Cadastro
+              </Button>
             </div>
           </div>
         )}

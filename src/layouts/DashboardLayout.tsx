@@ -339,12 +339,12 @@ export const DashboardLayout: React.FC = () => {
                     </Link>
                   </li>
                 )}
-                <li>
+                {/* TODO: Implementar configurações <li>
                   <Link to="/settings" className="flex items-center gap-2 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-brand-600">
                     <Settings className="w-4 h-4" />
                     Configurações
                   </Link>
-                </li>
+                </li> */}
 
                 {/* Logout - Separated */}
                 <li className="border-t border-slate-50">

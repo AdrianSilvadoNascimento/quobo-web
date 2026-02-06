@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { AccountUserType, AccountUserRole } from '../types/team.types';
 import type { TeamMember, UpdateMemberAccessData } from '../types/team.types';
+import { Button } from '@/components/ui';
 
 interface EditMemberModalProps {
   isOpen: boolean;
@@ -115,25 +116,13 @@ export const EditMemberModal: React.FC<EditMemberModalProps> = ({
 
           {/* Actions */}
           <div className="flex justify-end gap-3 pt-4">
-            <button
-              type="button"
-              onClick={onClose}
-              className="cursor-pointer px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-            >
+            <Button variant="secondary" type="button" onClick={onClose}>
               Cancelar
-            </button>
+            </Button>
             {!isOwner && (
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="btn bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center gap-2 text-sm font-medium shadow-sm transition-all"
-              >
-                {isLoading ? (
-                  <span className="loading loading-spinner loading-xs" />
-                ) : (
-                  'Salvar'
-                )}
-              </button>
+              <Button type="submit" isLoading={isLoading}>
+                Salvar
+              </Button>
             )}
           </div>
         </form>

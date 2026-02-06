@@ -11,6 +11,7 @@ import { AlertModal } from '@/components/AlertModal';
 
 import { item_service } from '@/features/items/services/items.service';
 import { AlertCircle } from 'lucide-react';
+import { Button, Loader } from '@/components/ui';
 
 export const NewAuditPage: React.FC = () => {
   const navigate = useNavigate();
@@ -201,12 +202,11 @@ export const NewAuditPage: React.FC = () => {
     <div className="max-w-5xl mx-auto pb-20">
       {/* Header */}
       <div className="flex items-center gap-4 mb-8">
-        <button
+        <Button
+          variant="back"
           onClick={() => navigate('/audits')}
-          className="cursor-pointer p-2 hover:bg-slate-100 rounded-full transition-colors"
-        >
-          <ArrowLeft className="w-6 h-6" />
-        </button>
+          icon={<ArrowLeft className="w-6 h-6" />}
+        />
         <div>
           <h1 className="text-2xl font-bold text-slate-800">Nova Auditoria</h1>
           <p className="text-slate-500 text-sm">Configure o escopo da sua contagem.</p>
@@ -338,7 +338,7 @@ export const NewAuditPage: React.FC = () => {
 
                   {/* Loading Sentinel */}
                   <div ref={observerTarget} className="h-4 flex items-center justify-center">
-                    {isLoadingCategories && <span className="loading loading-spinner loading-xs text-slate-400"></span>}
+                    {isLoadingCategories && <Loader size="xs" className="text-slate-400" />}
                   </div>
 
                   {!isLoadingCategories && categories.length === 0 && (
@@ -362,20 +362,19 @@ export const NewAuditPage: React.FC = () => {
               : 'Tudo pronto para iniciar'}
           </span>
           <div className="flex items-center gap-3 ml-auto">
-            <button
+            <Button
+              variant="secondary"
               onClick={() => navigate('/audits')}
-              className="btn btn-ghost border border-slate-200"
             >
               Cancelar
-            </button>
-            <button
+            </Button>
+            <Button
               onClick={handleStartAudit}
               disabled={!selectedType || (selectedType === AuditStockType.CYCLIC && selectedCategories.length === 0) || !hasProducts}
-              className="btn bg-blue-600 hover:bg-blue-700 text-white border-none gap-2 px-8 disabled:bg-slate-300 disabled:text-slate-500"
+              icon={<Check className="w-4 h-4" />}
             >
-              <Check className="w-4 h-4" />
               Iniciar Contagem
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -396,24 +395,23 @@ export const NewAuditPage: React.FC = () => {
               </div>
             </div>
             <div className="modal-action">
-              <button
+              <Button
                 onClick={() => {
                   setShowNoProductsModal(false);
                   navigate('/products/new');
                 }}
-                className="btn bg-blue-600 hover:bg-blue-700 text-white border-none"
               >
                 Cadastrar Produto
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="ghost"
                 onClick={() => {
                   setShowNoProductsModal(false);
                   navigate('/audits');
                 }}
-                className="btn btn-ghost"
               >
                 Voltar
-              </button>
+              </Button>
             </div>
           </div>
         </div>

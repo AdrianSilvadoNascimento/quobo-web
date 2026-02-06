@@ -10,6 +10,7 @@ import { category_service } from "../services/category.service";
 import { InfiniteScrollList } from "../components/infiniteScrollList";
 import { CategoryModal } from "../components/CategoryModal";
 import { InfiniteCategoryCards } from "../components/InfiniteCards";
+import { Button } from '@/components/ui';
 
 export const CategoriesPage: React.FC = () => {
   const queryClient = useQueryClient();
@@ -153,13 +154,13 @@ export const CategoriesPage: React.FC = () => {
           </div>
           <p className="text-slate-500 text-sm">Gerencie seu catálogo de categorias.</p>
         </div>
-        <button
+        <Button
           onClick={handleCreateCategory}
-          className="btn bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center gap-2 text-sm font-medium shadow-sm transition-all"
+          size="sm"
+          icon={<Plus className="w-4 h-4" />}
         >
-          <Plus className="w-4 h-4" />
           Nova Categoria
-        </button>
+        </Button>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-slate-100">

@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Clock, CreditCard } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui';
 
 interface ExpiredSubscriptionModalProps {
   isTrial: boolean;
@@ -61,17 +62,17 @@ export const ExpiredSubscriptionModal: React.FC<ExpiredSubscriptionModalProps> =
         </div>
 
         {/* CTA Button */}
-        <button
+        <Button
           onClick={handleGoToCheckout}
-          className="btn btn-primary w-full bg-gradient-to-br from-[#22B8E6] via-[#2563EB] to-[#1E40AF] text-white border-none hover:opacity-90 transition-opacity text-base h-12 normal-case font-semibold shadow-lg"
+          icon={<CreditCard className="w-5 h-5" />}
+          className="w-full h-12"
         >
-          <CreditCard className="w-5 h-5" />
           {isTrial ? 'Escolher Plano' : 'Renovar Assinatura'}
-        </button>
+        </Button>
 
-        <button onClick={logout} className="btn btn-ghost w-full text-red-600 mt-3">
+        <Button variant="ghost" onClick={logout} className="w-full text-red-600 mt-3">
           Sair
-        </button>
+        </Button>
       </div>
     </div>
   );

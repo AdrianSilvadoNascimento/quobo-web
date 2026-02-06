@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
-import { CheckCircle, XCircle, Loader2, ArrowRight, Sparkles } from 'lucide-react';
+import { CheckCircle, XCircle, ArrowRight, Sparkles } from 'lucide-react';
 import { planService } from '../services/plan.service';
 import { useAuth } from '@/contexts/AuthContext';
 import QuoboIcon from '@/assets/quobo-icon.svg';
+import { Button, Loader } from '@/components/ui';
 
 type PageState = 'loading' | 'success' | 'error';
 
@@ -79,7 +80,7 @@ export const CheckoutSuccessPage: React.FC = () => {
           {state === 'loading' && (
             <div className="text-center py-12">
               <div className="flex justify-center mb-6">
-                <Loader2 className="w-16 h-16 text-brand-600 animate-spin" />
+                <Loader size="lg" className="text-brand-600" />
               </div>
               <h2 className="text-2xl font-bold text-slate-800 mb-3">
                 Verificando seu pagamento...
@@ -161,13 +162,14 @@ export const CheckoutSuccessPage: React.FC = () => {
               </div>
 
               {/* Action Button */}
-              <button
+              <Button
                 onClick={handleGoToDashboard}
-                className="btn btn-lg bg-gradient-to-r from-[#22B8E6] via-[#2562EB] to-[#1E40AF] hover:from-brand-700 hover:to-blue-700 text-white border-none shadow-lg hover:shadow-xl transition-all duration-200 px-8"
+                size="lg"
+                icon={<ArrowRight className="w-5 h-5" />}
+                iconPosition="right"
               >
                 Ir para o Dashboard
-                <ArrowRight className="w-5 h-5 ml-2" />
-              </button>
+              </Button>
             </div>
           )}
 
@@ -190,18 +192,19 @@ export const CheckoutSuccessPage: React.FC = () => {
 
               {/* Action Buttons */}
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <button
+                <Button
+                  variant="outline"
+                  size="lg"
                   onClick={() => navigate('/checkout')}
-                  className="btn btn-outline btn-lg"
                 >
                   Voltar para Planos
-                </button>
-                <button
+                </Button>
+                <Button
+                  size="lg"
                   onClick={handleGoToDashboard}
-                  className="btn btn-lg bg-brand-600 hover:bg-brand-700 text-white border-none"
                 >
                   Ir para o Dashboard
-                </button>
+                </Button>
               </div>
             </div>
           )}
@@ -213,12 +216,12 @@ export const CheckoutSuccessPage: React.FC = () => {
             Você receberá um email de confirmação em breve.
             <br />
             Para gerenciar sua assinatura, acesse{' '}
-            <button
+            <Button
               onClick={() => navigate('/account/finance')}
-              className="text-brand-600 hover:text-brand-700 font-semibold underline"
+              variant="back"
             >
               Configurações de Conta
-            </button>
+            </Button>
           </p>
         </div>
       </div>

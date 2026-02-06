@@ -5,6 +5,7 @@ import { userApi } from '../../../services/userApi';
 import { phoneMask, removeMask } from '../../../utils/masks';
 import { validateEmail, validateFullName, validatePhone } from '../../../utils/validations';
 import { AccountInfoSection } from '../components/AccountInfoSection';
+import { Button } from '@/components/ui';
 
 export const ProfilePage: React.FC = () => {
   const { user, updateSubscriptionStatus } = useAuth();
@@ -188,12 +189,15 @@ export const ProfilePage: React.FC = () => {
         <div>
           <h2 className="text-lg font-bold text-slate-800">{user?.name} {user?.lastname}</h2>
           <p className="text-slate-500 text-sm capitalize">{user?.type?.toLowerCase()}</p>
-          <button
+          <Button
             onClick={handleAvatarClick}
-            className="text-blue-600 text-xs font-semibold hover:underline mt-1"
+            variant="back"
+            size="sm"
+            icon={<Camera className="w-4 h-4" />}
+            className="text-xs font-semibold mt-1"
           >
             Alterar foto
-          </button>
+          </Button>
           {errors.avatar && (
             <p className="text-red-500 text-xs mt-1">{errors.avatar}</p>
           )}
@@ -300,14 +304,14 @@ export const ProfilePage: React.FC = () => {
         </div>
 
         <div className="pt-4 border-t border-slate-100 flex justify-end">
-          <button
+          <Button
             type="submit"
             disabled={isLoading}
-            className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-6 py-2 rounded-lg flex items-center gap-2 text-sm font-medium shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            variant="primary"
+            icon={<Save className="w-4 h-4" />}
           >
-            <Save className="w-4 h-4" />
-            {isLoading ? 'Salvando...' : 'Salvar Alterações'}
-          </button>
+            Salvar Alterações
+          </Button>
         </div>
       </form>
 

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { X, Loader2 } from 'lucide-react';
+import { X } from 'lucide-react';
 import { AccountUserRole, AccountUserType } from '../types/team.types';
 import type { CreateInviteData } from '../types/team.types';
+import { Button } from '@/components/ui';
 
 interface InviteModalProps {
   isOpen: boolean;
@@ -109,22 +110,12 @@ export const InviteModal: React.FC<InviteModalProps> = ({ isOpen, onClose, onSub
             </div>
 
             <div className="flex justify-end gap-3 pt-4">
-              <button
-                type="button"
-                onClick={onClose}
-                className="cursor-pointer px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
-                disabled={isLoading}
-              >
+              <Button variant="secondary" type="button" onClick={onClose} disabled={isLoading}>
                 Cancelar
-              </button>
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="cursor-pointer px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
-                {isLoading ? 'Enviando...' : 'Enviar Convite'}
-              </button>
+              </Button>
+              <Button type="submit" isLoading={isLoading}>
+                Enviar Convite
+              </Button>
             </div>
           </form>
         </div>

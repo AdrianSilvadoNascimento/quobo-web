@@ -6,7 +6,6 @@ import {
   TrendingDown,
   Settings,
   Package,
-  Loader2,
   CheckCircle2,
   AlertCircle
 } from 'lucide-react';
@@ -14,6 +13,7 @@ import type { MovementType } from '../types/movement.model';
 import type { ItemModel } from '@/features/items/types/item.model';
 import { movement_service, type CreateMovementData } from '../services/movement.service';
 import { item_service } from '@/features/items/services/items.service';
+import { Button, Loader } from '@/components/ui';
 
 export const NewMovementPage: React.FC = () => {
   const navigate = useNavigate();
@@ -130,12 +130,11 @@ export const NewMovementPage: React.FC = () => {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <button
+        <Button
+          variant="back"
           onClick={() => navigate('/movements')}
-          className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
-        >
-          <ArrowLeft className="w-5 h-5 text-slate-600" />
-        </button>
+          icon={<ArrowLeft className="w-5 h-5 text-slate-600" />}
+        />
         <div>
           <h1 className="text-2xl font-bold text-slate-800">Nova Movimentação</h1>
           <p className="text-sm text-slate-500">Registre entradas, saídas ou ajustes de estoque</p>
@@ -191,7 +190,7 @@ export const NewMovementPage: React.FC = () => {
                 className="w-full pl-11 pr-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               {isSearching && (
-                <Loader2 className="absolute right-3 top-3 w-5 h-5 text-blue-600 animate-spin" />
+                <Loader size="sm" className="absolute right-3 top-3 text-blue-600" />
               )}
             </div>
 
@@ -281,21 +280,20 @@ export const NewMovementPage: React.FC = () => {
 
       {/* Actions */}
       <div className="flex justify-end gap-3">
-        <button
+        <Button
+          variant="secondary"
           onClick={() => navigate('/movements')}
           disabled={isSubmitting}
-          className="px-6 py-3 border border-slate-200 rounded-lg text-slate-700 hover:bg-slate-50 transition-colors disabled:opacity-50"
         >
           Cancelar
-        </button>
-        <button
+        </Button>
+        <Button
           onClick={handleSubmit}
           disabled={!selectedType || !selectedProduct || quantity <= 0 || isSubmitting}
-          className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          isLoading={isSubmitting}
         >
-          {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
           {isSubmitting ? 'Criando...' : 'Criar Movimentação'}
-        </button>
+        </Button>
       </div>
     </div>
   );

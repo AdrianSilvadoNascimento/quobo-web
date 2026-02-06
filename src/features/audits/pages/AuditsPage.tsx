@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { Plus, Search, ClipboardCheck, X, SlidersHorizontal } from 'lucide-react';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { audit_service } from '../services/audit.service';
-import type { ItemAuditModel } from '../types/audit.model';
 import { InfiniteScrollList } from '../components/infiniteScroll';
+import { Button } from '@/components/ui';
 
 export const AuditsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -69,13 +69,14 @@ export const AuditsPage: React.FC = () => {
           </div>
           <p className="text-slate-500 text-sm">Controle e contagem de estoque para garantir a acuracidade.</p>
         </div>
-        <button
+        <Button
+          variant='primary'
+          size='sm'
+          icon={<Plus className="w-4 h-4" />}
           onClick={() => navigate('/audits/new')}
-          className="btn bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center gap-2 text-sm font-medium shadow-sm transition-all"
         >
-          <Plus className="w-4 h-4" />
           Nova Auditoria
-        </button>
+        </Button>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
@@ -95,7 +96,7 @@ export const AuditsPage: React.FC = () => {
             {searchQuery ? (
               <button
                 onClick={handleClearSearch}
-                className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600"
+                className="cursor-pointer absolute right-3 top-2.5 text-slate-400 hover:text-slate-600"
               >
                 <X className="w-4 h-4" />
               </button>

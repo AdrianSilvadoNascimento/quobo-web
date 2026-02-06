@@ -4,6 +4,7 @@ import { useAuth } from '../../../contexts/AuthContext';
 import { accountApi } from '../../../services/accountApi';
 import { cpfCnpjMask, phoneMask, removeMask } from '../../../utils/masks';
 import { validateEmail, validateCPFOrCNPJ, validatePhone } from '../../../utils/validations';
+import { Button } from '@/components/ui';
 
 export const AccountInfoSection: React.FC = () => {
   const { user, account } = useAuth();
@@ -273,14 +274,14 @@ export const AccountInfoSection: React.FC = () => {
         </div>
 
         <div className="pt-4 border-t border-slate-100 flex justify-end">
-          <button
+          <Button
             type="submit"
             disabled={isLoading}
-            className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-6 py-2 rounded-lg flex items-center gap-2 text-sm font-medium shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            isLoading={isLoading}
+            icon={<Save className="w-4 h-4" />}
           >
-            <Save className="w-4 h-4" />
-            {isLoading ? 'Salvando...' : 'Salvar Alterações'}
-          </button>
+            Salvar Alterações
+          </Button>
         </div>
       </form>
     </div>

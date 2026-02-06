@@ -7,6 +7,7 @@ import Empty from "@/components/ui/Empty";
 import { useNavigate } from "react-router-dom";
 import { ConfirmationModal } from "@/components/ConfirmationModal";
 import { item_service } from "../services/items.service";
+import { Loader } from "@/components/ui";
 
 interface InfiniteItemCardsProps {
   items: ItemModel[];
@@ -81,7 +82,7 @@ export const InfiniteItemCards: React.FC<InfiniteItemCardsProps> = ({
     return (
       <div className="flex justify-center items-center p-12">
         <div className="flex flex-col items-center gap-3">
-          <span className="loading loading-spinner loading-lg text-brand-600"></span>
+          <Loader size="lg" className="text-brand-600" />
           <p className="text-slate-500 text-sm font-medium">Buscando itens...</p>
         </div>
       </div>

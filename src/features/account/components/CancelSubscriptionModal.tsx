@@ -3,6 +3,7 @@ import { AlertCircle, X, ShieldAlert } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { accountApi } from '@/services/accountApi';
 import { AlertModal, type AlertType } from '@/components/AlertModal';
+import { Button } from '@/components/ui';
 
 interface CancelSubscriptionModalProps {
   isOpen: boolean;
@@ -86,12 +87,12 @@ export const CancelSubscriptionModal: React.FC<CancelSubscriptionModalProps> = (
             </p>
           </div>
 
-          <button
+          <Button
             onClick={onClose}
-            className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-1 rounded-full hover:bg-slate-100 transition-colors"
-          >
-            <X size={20} />
-          </button>
+            variant="back"
+            icon={<X size={20} />}
+            className="absolute top-4 right-4"
+          />
 
           <div className="p-6 space-y-6">
 
@@ -124,27 +125,23 @@ export const CancelSubscriptionModal: React.FC<CancelSubscriptionModalProps> = (
 
             {/* Actions */}
             <div className="flex gap-3 pt-2">
-              <button
-                className="btn btn-ghost flex-1 text-slate-600"
+              <Button
+                variant="secondary"
+                className="flex-1"
                 onClick={onClose}
                 disabled={isLoading}
               >
                 Manter Assinatura
-              </button>
-              <button
-                className={`btn ${isChecked ? 'btn-error text-white' : 'btn-ghost'} flex-1 border-0 transition-all duration-300`}
+              </Button>
+              <Button
+                variant={isChecked ? 'danger' : 'secondary'}
+                className="flex-1"
                 onClick={handleConfirm}
                 disabled={!isChecked || isLoading}
+                isLoading={isLoading}
               >
-                {isLoading ? (
-                  <>
-                    <span className="loading loading-spinner loading-sm"></span>
-                    Processando...
-                  </>
-                ) : (
-                  'Confirmar Cancelamento'
-                )}
-              </button>
+                Confirmar Cancelamento
+              </Button>
             </div>
           </div>
         </div>

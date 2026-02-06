@@ -9,6 +9,7 @@ import { customer_service } from '../services/customer.service';
 
 import { CustomerModel, type CustomerType } from '../types/customer.model';
 import InfiniteCards from '../components/InfiniteCards';
+import { Button } from '@/components/ui';
 
 interface CustomerTypeProp {
   value: string;
@@ -135,13 +136,13 @@ export const CustomersPage: React.FC = () => {
           </div>
           <p className="text-slate-500 text-sm">Gerencie sua base de clientes e parceiros.</p>
         </div>
-        <button
+        <Button
           onClick={() => navigate('/customers/new')}
-          className="btn bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium shadow-sm transition-all"
+          size="sm"
+          icon={<UserPlus className="w-4 h-4" />}
         >
-          <UserPlus className="w-4 h-4" />
           Novo Cliente
-        </button>
+        </Button>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-slate-100">
@@ -177,16 +178,17 @@ export const CustomersPage: React.FC = () => {
             )}
           </div>
           <div className="dropdown dropdown-end">
-            <button
+            <Button
               tabIndex={0}
-              className="btn btn-ghost btn-sm flex items-center gap-2"
+              variant="ghost"
+              size="sm"
+              icon={<Filter className="w-4 h-4" />}
             >
-              <Filter className="w-4 h-4" />
               <span className="text-slate-600">
                 {customerType.label}
               </span>
               <ChevronDown className="w-4 h-4 opacity-50" />
-            </button>
+            </Button>
             <ul
               tabIndex={0}
               className="dropdown-content menu p-2 shadow bg-white rounded-box w-52 z-50"

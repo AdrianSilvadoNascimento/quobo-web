@@ -5,7 +5,6 @@ import {
   TrendingDown,
   Settings,
   Package,
-  Loader2,
   CheckCircle2,
   AlertCircle,
   Search,
@@ -15,6 +14,7 @@ import type { ItemModel } from '@/features/items/types/item.model';
 import { movement_service, type CreateMovementData } from '../services/movement.service';
 import { item_service } from '@/features/items/services/items.service';
 import { useDebounce } from '@/hooks/useDebounce';
+import { Button, Loader } from '@/components/ui';
 
 interface NewMovementModalProps {
   isOpen: boolean;
@@ -198,8 +198,8 @@ export const NewMovementModal: React.FC<NewMovementModalProps> = ({
                     key={type.value}
                     onClick={() => setSelectedType(type.value)}
                     className={`p-4 rounded-lg border-2 transition-all text-left ${isSelected
-                        ? 'border-blue-500 bg-blue-50'
-                        : 'border-slate-200 hover:border-slate-300'
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'border-slate-200 hover:border-slate-300'
                       }`}
                   >
                     <div className="flex items-start gap-3">
@@ -241,7 +241,7 @@ export const NewMovementModal: React.FC<NewMovementModalProps> = ({
                   className="w-full pl-11 pr-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 {isSearching && (
-                  <Loader2 className="absolute right-3 top-3 w-5 h-5 text-blue-600 animate-spin" />
+                  <Loader size="sm" className="absolute right-3 top-3 text-blue-600" />
                 )}
               </div>
 
@@ -249,17 +249,18 @@ export const NewMovementModal: React.FC<NewMovementModalProps> = ({
               {showDropdown && searchResults.length > 0 && (
                 <div className="mt-2 border border-slate-200 rounded-lg divide-y max-h-64 overflow-y-auto bg-white shadow-lg z-10">
                   {searchResults.map((product) => (
-                    <button
+                    <Button
                       key={product.id}
                       onClick={() => handleSelectProduct(product)}
                       className="w-full p-3 hover:bg-slate-50 text-left transition-colors"
+                      variant='ghost'
                     >
                       <div className="font-medium text-slate-800">{product.name}</div>
                       <div className="text-sm text-slate-500 mt-1">
                         Estoque: {product.quantity} {product.unit_of_measure?.abbreviation || 'un'}
                         {product.barcode && ` • Código: ${product.barcode}`}
                       </div>
-                    </button>
+                    </Button>
                   ))}
                 </div>
               )}
@@ -340,21 +341,20 @@ export const NewMovementModal: React.FC<NewMovementModalProps> = ({
 
         {/* Actions */}
         <div className="modal-action">
-          <button
+          <Button
+            variant="secondary"
             onClick={handleClose}
             disabled={isSubmitting}
-            className="btn btn-ghost"
           >
             Cancelar
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={handleSubmit}
             disabled={!selectedType || !selectedProduct || quantity <= 0 || isSubmitting}
-            className="btn btn-primary"
+            isLoading={isSubmitting}
           >
-            {isSubmitting && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-            {isSubmitting ? 'Criando...' : 'Criar Movimentação'}
-          </button>
+            Criar Movimentação
+          </Button>
         </div>
       </div>
       <div className="modal-backdrop" onClick={handleClose} />

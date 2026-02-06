@@ -10,6 +10,7 @@ import { EditMemberModal } from '../components/EditMemberModal';
 import { useAuth } from '@/contexts/AuthContext';
 import { AccountUserType, AccountUserRole } from '../types/team.types';
 import type { TeamMember, UpdateMemberAccessData } from '../types/team.types';
+import { Button } from '@/components/ui';
 
 export const TeamPage: React.FC = () => {
   const { user } = useAuth();
@@ -67,13 +68,13 @@ export const TeamPage: React.FC = () => {
         </div>
 
         {isAdminOrOwner && (
-          <button
+          <Button
             onClick={() => setIsInviteModalOpen(true)}
-            className="btn bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center gap-2 text-sm font-medium shadow-sm transition-all"
+            size="sm"
+            icon={<Plus className="w-5 h-5" />}
           >
-            <Plus className="w-5 h-5 mr-2" />
             Convidar Membro
-          </button>
+          </Button>
         )}
       </div>
 

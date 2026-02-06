@@ -4,6 +4,7 @@ import { InviteStatus, AccountUserRole } from '../types/team.types';
 import type { Invite } from '../types/team.types';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { Button, Loader } from '@/components/ui';
 
 interface InviteListProps {
   invites: Invite[];
@@ -29,7 +30,7 @@ export const InviteList: React.FC<InviteListProps> = ({
   if (isLoading) {
     return (
       <div className="flex justify-center py-10">
-        <span className="loading loading-spinner loading-md text-primary"></span>
+        <Loader size="md" className="text-primary" />
       </div>
     );
   }
@@ -101,30 +102,26 @@ export const InviteList: React.FC<InviteListProps> = ({
               <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                 {invite.status === InviteStatus.PENDING && (
                   <div className="flex justify-end gap-2">
-                    <button
+                    <Button
                       onClick={() => onResend(invite.id)}
                       disabled={isResending || isCancelling}
                       className="cursor-pointer text-blue-600 hover:text-blue-900 p-1.5 rounded hover:bg-blue-50 transition-colors tooltip tooltip-left disabled:opacity-50 disabled:cursor-not-allowed"
                       data-tip="Reenviar convite"
-                    >
-                      {resendingId === invite.id ? (
-                        <span className="w-4 h-4 loading loading-spinner" />
-                      ) : (
-                        <RefreshCw className="w-4 h-4" />
-                      )}
-                    </button>
-                    <button
+                      variant='ghost'
+                      size='sm'
+                      isLoading={resendingId === invite.id}
+                      icon={<RefreshCw className="w-4 h-4" />}
+                    />
+                    <Button
                       onClick={() => onCancel(invite.id)}
                       disabled={isCancelling || isResending}
                       className="cursor-pointer text-red-600 hover:text-red-900 p-1.5 rounded hover:bg-red-50 transition-colors tooltip tooltip-left disabled:opacity-50 disabled:cursor-not-allowed"
                       data-tip="Cancelar convite"
-                    >
-                      {cancellingId === invite.id ? (
-                        <span className="w-4 h-4 loading loading-spinner" />
-                      ) : (
-                        <Trash2 className="w-4 h-4" />
-                      )}
-                    </button>
+                      variant='ghost'
+                      size='sm'
+                      isLoading={cancellingId === invite.id}
+                      icon={<Trash2 className="w-4 h-4" />}
+                    />
                   </div>
                 )}
               </td>

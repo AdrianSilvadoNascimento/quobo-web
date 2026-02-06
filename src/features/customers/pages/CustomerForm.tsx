@@ -7,6 +7,7 @@ import { customer_service } from '../services/customer.service';
 import { UtilsService } from '@/utils/utils_service';
 import { CustomerModel, type CustomerType, CustomerAddressEntity } from '../types/customer.model';
 import { AlertModal, type AlertType } from '@/components/AlertModal';
+import { Button, Loader } from '@/components/ui';
 
 interface CustomerFormData {
   name: string;
@@ -229,12 +230,11 @@ const CustomerForm: React.FC = () => {
 
       {/* Header */}
       <div className="flex items-center gap-4">
-        <button
+        <Button
+          variant="back"
           onClick={() => navigate('/customers')}
-          className="cursor-pointer p-2 hover:bg-slate-100 rounded-full transition-colors"
-        >
-          <ArrowLeft className="w-5 h-5 text-slate-600" />
-        </button>
+          icon={<ArrowLeft className="w-5 h-5 text-slate-600" />}
+        />
         <div>
           <h1 className="text-2xl font-bold text-slate-800">{id ? 'Editar Cliente' : 'Novo Cliente'}</h1>
           <p className="text-slate-500 text-sm">{id ? 'Atualize as informações do cliente.' : 'Preencha as informações para cadastrar um novo cliente.'}</p>
@@ -379,7 +379,7 @@ const CustomerForm: React.FC = () => {
                     />
                     <div className="absolute right-3 top-3 text-slate-400">
                       {isLoadingCep ? (
-                        <span className="loading loading-spinner loading-xs"></span>
+                        <Loader size="xs" />
                       ) : (
                         <Search className="w-4 h-4" />
                       )}
@@ -515,25 +515,22 @@ const CustomerForm: React.FC = () => {
             </div>
 
             <div className="mt-8 space-y-3">
-              <button
+              <Button
                 onClick={handleSubmit}
-                disabled={isSubmitting}
-                className="btn bg-blue-600 hover:bg-blue-700 text-white w-full flex items-center gap-2"
+                isLoading={isSubmitting}
+                icon={<Save className="w-4 h-4" />}
+                className="w-full"
               >
-                {isSubmitting ? (
-                  <span className="loading loading-spinner loading-sm"></span>
-                ) : (
-                  <Save className="w-4 h-4" />
-                )}
                 Salvar Cliente
-              </button>
+              </Button>
 
-              <button
+              <Button
+                variant="secondary"
                 onClick={() => navigate('/customers')}
-                className="btn btn-outline border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300 w-full"
+                className="w-full"
               >
                 Cancelar
-              </button>
+              </Button>
             </div>
           </div>
         </div>

@@ -15,6 +15,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { item_service } from '../services/items.service';
 import { category_service } from '@/features/categories/services/category.service';
 import { unit_of_measure_service } from '../services/unit_of_measure.service';
+import { Button } from '@/components/ui';
 
 import { CategoryModel } from '@/features/categories/types/category.model';
 import { UnitOfMeasureModel } from '../types/unity_of_measure.model';
@@ -223,12 +224,11 @@ export const ItemForm: React.FC = () => {
 
       {/* Header */}
       <div className="flex items-center gap-4 mb-8">
-        <button
+        <Button
+          variant="back"
           onClick={() => navigate('/products')}
-          className="cursor-pointer p-2 hover:bg-slate-100 rounded-full transition-colors"
-        >
-          <ArrowLeft className="w-6 h-6" />
-        </button>
+          icon={<ArrowLeft className="w-6 h-6" />}
+        />
         <div>
           <h1 className="text-2xl font-bold text-slate-800">
             {id ? 'Editar Produto' : 'Novo Produto'}
@@ -511,27 +511,20 @@ export const ItemForm: React.FC = () => {
 
         {/* Action Buttons (Floating or Bottom) */}
         <div className="lg:col-span-3 flex justify-end gap-3 pt-6 border-t border-slate-200">
-          <button
+          <Button
+            variant="secondary"
             type="button"
             onClick={() => navigate('/products')}
-            className="btn px-6 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-100 font-medium transition-colors"
           >
             Cancelar
-          </button>
-          <button
+          </Button>
+          <Button
             type="submit"
-            disabled={isLoading}
-            className="btn bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold flex items-center gap-2 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+            isLoading={isLoading}
+            icon={<Save className="w-4 h-4" />}
           >
-            {isLoading ? (
-              <span className="loading loading-dots loading-md" />
-            ) : (
-              <>
-                <Save className="w-4 h-4" />
-                Salvar Produto
-              </>
-            )}
-          </button>
+            Salvar Produto
+          </Button>
         </div>
 
       </form>

@@ -7,6 +7,7 @@ import { CancelSubscriptionModal } from '../components/CancelSubscriptionModal';
 import { planService } from '@/features/checkout/services/plan.service';
 
 import { useSubscriptionSocket } from '@/hooks/useSubscriptionSocket';
+import { Button } from '@/components/ui';
 
 export const FinancePage: React.FC = () => {
   const { account } = useAuth();
@@ -170,21 +171,23 @@ export const FinancePage: React.FC = () => {
             </div>
 
             <div className="flex flex-col gap-3 min-w-[200px]">
-              <button
+              <Button
                 onClick={handleViewPlans}
-                className="btn btn-primary bg-gradient-to-br from-[#22B8E6] via-[#2563EB] to-[#1E40AF] text-white font-bold rounded-lg w-full transition-transform hover:scale-[1.02]"
+                variant="primary"
+                className="bg-gradient-to-br from-[#22B8E6] via-[#2563EB] to-[#1E40AF] text-white font-bold rounded-lg w-full transition-transform hover:scale-[1.02]"
               >
                 {formattedSubscription?.isCanceled ? 'Reativar Assinatura' : 'Ver Planos'}
-              </button>
+              </Button>
 
               {!formattedSubscription?.isCanceled && !formattedSubscription?.is_expired && (
-                <button
+                <Button
                   onClick={() => setIsCancelModalOpen(true)}
+                  variant="danger"
                   className="btn btn-outline btn-sm text-red-600 hover:bg-red-50 hover:border-red-200 border-slate-200 w-full"
                   title="Cancelar assinatura"
                 >
                   Cancelar
-                </button>
+                </Button>
               )}
             </div>
           </div>
@@ -209,7 +212,7 @@ export const FinancePage: React.FC = () => {
                     <p className="text-xs text-slate-500 mt-0.5">Expira em {financeData.paymentMethod.expiration_date}</p>
                   </div>
                 </div>
-                <button onClick={handleUpdateCard} className="cursor-pointer text-brand-600 text-sm font-medium hover:underline">Alterar</button>
+                <Button onClick={handleUpdateCard} variant="ghost">Alterar</Button>
               </>
             ) : (
               <div className="flex items-center justify-between w-full">
@@ -219,7 +222,7 @@ export const FinancePage: React.FC = () => {
                   </div>
                   <p className="text-sm text-slate-500">Nenhum cartão cadastrado</p>
                 </div>
-                <button onClick={handleUpdateCard} className="cursor-pointer text-brand-600 text-sm font-medium hover:underline">Adicionar</button>
+                <Button onClick={handleUpdateCard} variant="ghost">Adicionar</Button>
               </div>
             )}
           </div>
@@ -238,7 +241,6 @@ export const FinancePage: React.FC = () => {
                 </p>
               )}
             </div>
-            <button className="cursor-pointer text-brand-600 text-sm font-medium hover:underline">Editar</button>
           </div>
         </section>
       </div>
@@ -255,7 +257,7 @@ export const FinancePage: React.FC = () => {
                   <th className="px-6 py-4">Plano</th>
                   <th className="px-6 py-4">Valor</th>
                   <th className="px-6 py-4 text-center">Status</th>
-                  <th className="px-6 py-4 text-right">Fatura</th>
+                  <th className="px-6 py-4 text-center">Fatura</th>
                   <th className="px-6 py-4 text-right">Ação</th>
                 </tr>
               </thead>
@@ -278,20 +280,22 @@ export const FinancePage: React.FC = () => {
                             </span>
                           )}
                         </td>
-                        <td className="px-6 py-4 text-right">
-                          <button
+                        <td className="px-6 py-4 text-center">
+                          <Button
+                            variant='ghost'
                             onClick={() => invoice.invoice_pdf && window.open(invoice.invoice_pdf, '_blank')}
                             disabled={!invoice.invoice_pdf}
                             className="cursor-pointer inline-flex items-center gap-1 text-slate-400 hover:text-brand-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             title={invoice.invoice_pdf ? 'Baixar PDF' : 'PDF não disponível'}
+                            icon={<Download className="w-4 h-4" />}
                           >
-                            <Download className="w-4 h-4" />
                             <span className="hidden sm:inline">PDF</span>
-                          </button>
+                          </Button>
                         </td>
                         <td className="px-6 py-4 text-right">
                           {invoice.status !== 'paid' && (
-                            <button
+                            <Button
+                              variant='ghost'
                               onClick={async () => {
                                 setRetryingInvoice(invoice.id);
                                 try {
@@ -314,7 +318,7 @@ export const FinancePage: React.FC = () => {
                             >
                               <RefreshCw className={`w-3.5 h-3.5 ${retryingInvoice === invoice.id ? 'animate-spin' : ''}`} />
                               <span>{retryingInvoice === invoice.id ? 'Processando...' : 'Tentar Novamente'}</span>
-                            </button>
+                            </Button>
                           )}
                         </td>
                       </tr>

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
-import { Plus, TrendingUp, Loader2, List, BarChart3, Search, X, SlidersHorizontal, Filter, ChevronDown, ArrowLeftRight } from 'lucide-react';
+import { Plus, TrendingUp, List, BarChart3, Search, X, SlidersHorizontal, Filter, ChevronDown, ArrowLeftRight } from 'lucide-react';
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import { useDebounce } from '@/hooks/useDebounce';
 import { movement_service } from '../services/movement.service';
@@ -7,6 +7,7 @@ import type { MovementModel, MovementType } from '../types/movement.model';
 import { MovementCard } from '../components/MovementCard';
 import { MovementsAnalyticsTab } from '../components/MovementsAnalyticsTab';
 import { NewMovementModal } from '../components/NewMovementModal';
+import { Button, Loader } from '@/components/ui';
 
 type TabType = 'list' | 'analytics';
 
@@ -142,13 +143,13 @@ export const MovementsPage: React.FC = () => {
           </div>
           <p className="text-sm text-slate-500">Visualize e gerencie movimentações de estoque</p>
         </div>
-        <button
+        <Button
           onClick={() => setIsModalOpen(true)}
-          className="btn flex items-center text-sm gap-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+          size="sm"
+          icon={<Plus className="w-5 h-5" />}
         >
-          <Plus className="w-5 h-5" />
           Nova Movimentação
-        </button>
+        </Button>
       </div>
 
       {/* Tabs */}
@@ -212,16 +213,17 @@ export const MovementsPage: React.FC = () => {
               )}
             </div>
             <div className="dropdown dropdown-start md:dropdown-end">
-              <button
+              <Button
                 tabIndex={0}
-                className="btn btn-ghost btn-sm flex items-center gap-2"
+                variant="ghost"
+                size="sm"
+                icon={<Filter className="w-4 h-4" />}
               >
-                <Filter className="w-4 h-4" />
                 <span className="text-slate-600">
                   {movementType.label}
                 </span>
                 <ChevronDown className="w-4 h-4 opacity-50" />
-              </button>
+              </Button>
               <ul
                 tabIndex={0}
                 className="dropdown-content menu p-2 shadow bg-white rounded-box w-52 z-50"
@@ -246,7 +248,7 @@ export const MovementsPage: React.FC = () => {
           <div className="p-4 space-y-3">
             {isSearching || loading ? (
               <div className="flex justify-center py-12">
-                <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+                <Loader size="lg" className="text-blue-600" />
               </div>
             ) : displayedMovements.length === 0 ? (
               <div className="text-center py-12">
@@ -265,20 +267,13 @@ export const MovementsPage: React.FC = () => {
                 {/* Load More Button */}
                 {!searchResults && hasMore && (
                   <div className="flex justify-center py-4">
-                    <button
+                    <Button
+                      variant="secondary"
                       onClick={loadMore}
-                      disabled={loading}
-                      className="px-6 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium transition-colors disabled:opacity-50"
+                      isLoading={loading}
                     >
-                      {loading ? (
-                        <div className="flex items-center gap-2">
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                          Carregando...
-                        </div>
-                      ) : (
-                        'Carregar mais'
-                      )}
-                    </button>
+                      Carregar mais
+                    </Button>
                   </div>
                 )}
               </>

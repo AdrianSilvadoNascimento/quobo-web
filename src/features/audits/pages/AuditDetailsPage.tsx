@@ -7,6 +7,7 @@ import { AuditStockStatus, AuditStockType } from '../types/audit.model';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { AuditQRCode } from '../components/AuditQRCode';
+import { Button, Loader } from '@/components/ui';
 
 export const AuditDetailsPage: React.FC = () => {
   const { id } = useParams();
@@ -35,7 +36,7 @@ export const AuditDetailsPage: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <span className="loading loading-spinner loading-lg text-brand-600"></span>
+        <Loader size="lg" className="text-brand-600" />
       </div>
     );
   }
@@ -45,9 +46,9 @@ export const AuditDetailsPage: React.FC = () => {
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-slate-500">
         <AlertCircle className="w-12 h-12 mb-4 opacity-50" />
         <h2 className="text-xl font-semibold">Auditoria não encontrada</h2>
-        <button onClick={() => navigate('/audits')} className="btn btn-link text-brand-600 mt-4">
+        <Button variant="ghost" onClick={() => navigate('/audits')} className="text-brand-600 mt-4">
           Voltar para lista
-        </button>
+        </Button>
       </div>
     );
   }
@@ -78,15 +79,14 @@ export const AuditDetailsPage: React.FC = () => {
   const countedItems = audit.counted_items?.length || 0;
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6 pb-20">
+    <div className="mx-auto space-y-6 pb-20">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <button
+        <Button
+          variant="back"
           onClick={() => navigate('/audits')}
-          className="cursor-pointer p-2 hover:bg-slate-100 rounded-full transition-colors"
-        >
-          <ArrowLeft className="w-6 h-6" />
-        </button>
+          icon={<ArrowLeft className="w-6 h-6" />}
+        />
         <div>
           <div className="flex items-center gap-3">
             <h1 className="text-2xl font-bold text-slate-800">{audit.code}</h1>
@@ -169,7 +169,7 @@ export const AuditDetailsPage: React.FC = () => {
               <p className="text-slate-500 text-sm">
                 Esta auditoria foi concluída. Você pode visualizar o relatório completo de discrepâncias e ajustes realizados.
               </p>
-              <button className="btn btn-outline btn-sm mt-4">Ver Relatório Completo</button>
+              <Button variant="outline" size="sm" className="mt-4">Ver Relatório Completo</Button>
             </div>
           )}
         </div>
