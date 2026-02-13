@@ -4,6 +4,7 @@ import { OnboardingProvider } from './features/onboarding/contexts/OnboardingCon
 import { OnboardingGuard } from './features/onboarding/components/OnboardingGuard';
 import { Router } from './routes/Router';
 import { useRealtimeSocket } from './hooks/useRealtimeSocket';
+import { Toaster } from 'sonner';
 
 /**
  * Componente que inicia a conexão WebSocket assim que o usuário está autenticado.
@@ -22,6 +23,7 @@ const App: React.FC = () => {
           <OnboardingProvider>
             <OnboardingGuard>
               <Router />
+              <Toaster position="top-right" richColors />
             </OnboardingGuard>
           </OnboardingProvider>
         </RealtimeSocketProvider>

@@ -25,6 +25,8 @@ import { AuditDetailsPage } from '@/features/audits/pages/AuditDetailsPage';
 import ForgotPassword from '@/features/auth/pages/ForgotPassword';
 import ResetPassword from '@/features/auth/pages/ResetPassword';
 import { EmailVerificationProcessingPage } from '@/features/auth/pages/EmailVerificationProcessingPage';
+import { ImportPage } from '@/features/import';
+import { FeatureGuard } from '@/components/FeatureGuard';
 
 export const Router: React.FC = () => {
   const { isAuthenticated, isLoading, user } = useAuth();
@@ -66,7 +68,11 @@ export const Router: React.FC = () => {
             <Route path="/customers/new" element={<CustomerForm />} />
             <Route path="/customers/:id" element={<CustomerForm />} />
 
-            <Route path="/team" element={<TeamPage />} />
+            <Route path="/team" element={
+              <FeatureGuard check={(feature) => feature?.team_features?.enabled}>
+                <TeamPage />
+              </FeatureGuard>
+            } />
 
             <Route path="/categories" element={<CategoriesPage />} />
 
@@ -74,6 +80,13 @@ export const Router: React.FC = () => {
             <Route path="/audits" element={<AuditsPage />} />
             <Route path="/audits/new" element={<NewAuditPage />} />
             <Route path="/audits/:id" element={<AuditDetailsPage />} />
+
+            {/* Import Route */}
+            <Route path="/import" element={
+              <FeatureGuard check={(feature) => feature?.import_features?.excel_import}>
+                <ImportPage />
+              </FeatureGuard>
+            } />
 
             {/* Checkout/Plans Routes */}
             <Route path="/checkout" element={<CheckoutPage />} />

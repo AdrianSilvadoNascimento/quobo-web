@@ -9,19 +9,22 @@ import {
   ArrowLeftRight,
   Users,
   LogOut,
-  Menu as MenuIcon,
   Tag,
   ChevronDown,
   CreditCard,
   Settings,
   User,
   ClipboardCheck,
+  FileSpreadsheet,
+  PanelLeftClose,
+  PanelRightClose,
 } from 'lucide-react';
 
 import QuoboIcon from '@/assets/quobo-icon.svg';
 
 import { useSubscriptionSocket } from '../hooks/useSubscriptionSocket';
 import { authService } from '@/features/auth/services/auth.service';
+import { Button } from '@/components/ui';
 
 export const DashboardLayout: React.FC = () => {
   const { logout, user, account, expirationDays, isTrial, subscription, isSubscriptionExpired, updateSubscriptionStatus, isAdmin } = useAuth();
@@ -71,6 +74,7 @@ export const DashboardLayout: React.FC = () => {
     { label: 'Clientes', icon: Users, path: '/customers' },
     ...(subscription?.plan?.features?.team_features?.enabled ? [{ label: 'Time', icon: User, path: '/team' }] : []),
     { label: 'Auditorias', icon: ClipboardCheck, path: '/audits' },
+    ...(subscription?.plan?.features?.import_features?.excel_import ? [{ label: 'Importação', icon: FileSpreadsheet, path: '/import' }] : []),
   ];
 
   const isActive = (path: string) => location.pathname === path;
@@ -90,6 +94,10 @@ export const DashboardLayout: React.FC = () => {
 
   const handleModalDismiss = () => {
     setModalDismissed(true);
+  };
+
+  const togglePanelIcon = (isCollapsed: boolean) => {
+    return isCollapsed ? <PanelRightClose className="w-6 h-6" /> : <PanelLeftClose className="w-6 h-6" />;
   };
 
   return (
@@ -131,14 +139,17 @@ export const DashboardLayout: React.FC = () => {
                   color: active ? 'rgb(3, 105, 161)' : 'rgb(71, 85, 105)',
                   fontWeight: active ? '600' : '500',
                   fontSize: '0.875rem',
-                  padding: '10px 20px',
-                  margin: '4px 12px',
+                  padding: collapsed || toggled ? '10px 0' : '10px 20px',
+                  margin: collapsed || toggled ? '4px 8px' : '4px 12px',
                   borderRadius: '8px',
                   transition: 'all 0.2s',
                   '&:hover': {
                     backgroundColor: active ? 'rgb(240, 249, 255)' : 'rgb(248, 250, 252)',
                     color: active ? 'rgb(3, 105, 161)' : 'rgb(15, 23, 42)',
                   },
+                }),
+                icon: () => ({
+                  ...(collapsed || toggled ? { width: '100%', minWidth: 'unset', justifyContent: 'center' } : {}),
                 }),
               }}
             >
@@ -148,7 +159,7 @@ export const DashboardLayout: React.FC = () => {
                   active={isActive(item.path)}
                   icon={
                     <item.icon
-                      className={`w-5 h-5 ${isActive(item.path) ? 'text-brand-600' : 'text-slate-400'}
+                      className={`w-5 h-5 m-auto ${isActive(item.path) ? 'text-brand-600' : 'text-slate-400'}
                         }`}
                     />
                   }
@@ -158,7 +169,7 @@ export const DashboardLayout: React.FC = () => {
                     setToggled(false);
                   }}
                 >
-                  {item.label}
+                  {collapsed || toggled ? '' : item.label}
                 </MenuItem>
               ))}
             </Menu>
@@ -172,7 +183,8 @@ export const DashboardLayout: React.FC = () => {
                   color: 'rgb(71, 85, 105)',
                   fontWeight: '500',
                   fontSize: '0.875rem',
-                  padding: '10px 20px',
+                  padding: collapsed || toggled ? '10px 0' : '10px 20px',
+                  margin: collapsed || toggled ? '4px 8px' : '4px 12px',
                   borderRadius: '8px',
                   transition: 'all 0.2s',
                   '&:hover': {
@@ -180,13 +192,16 @@ export const DashboardLayout: React.FC = () => {
                     color: 'rgb(220, 38, 38)',
                   },
                 },
+                icon: {
+                  ...(collapsed || toggled ? { width: '100%', minWidth: 'unset', justifyContent: 'center' } : {}),
+                },
               }}
             >
               <MenuItem
-                icon={<LogOut className="w-5 h-5" />}
+                icon={<LogOut className="w-5 h-5 m-auto" />}
                 onClick={logout}
               >
-                Sair da conta
+                {collapsed || toggled ? '' : 'Sair da conta'}
               </MenuItem>
             </Menu>
           </div>
@@ -222,18 +237,20 @@ export const DashboardLayout: React.FC = () => {
         <header className="h-16 w-full bg-white border-b border-slate-200 flex items-center justify-between px-4 lg:px-8">
           {!isSubscriptionExpired ? (
             <>
-              <button
-                className="p-2 -ml-2 rounded-md text-slate-600 hover:bg-slate-100 transition-all duration-300 ease-in-out lg:hidden"
+              <Button
+                variant="back"
+                className="p-2 -ml-2 transition-all duration-300 ease-in-out lg:hidden"
                 onClick={() => setToggled(!toggled)}
               >
-                <MenuIcon className="w-6 h-6" />
-              </button>
-              <button
-                className="p-2 -ml-2 rounded-md text-slate-600 hover:bg-slate-100 transition-all duration-300 ease-in-out hidden lg:block"
+                {togglePanelIcon(toggled)}
+              </Button>
+              <Button
+                variant="back"
+                className="p-2 -ml-2 transition-all duration-300 ease-in-out hidden lg:block"
                 onClick={() => setCollapsed(!collapsed)}
               >
-                <MenuIcon className="w-6 h-6" />
-              </button>
+                {togglePanelIcon(collapsed)}
+              </Button>
             </>
           ) : (
             <div></div>
@@ -339,12 +356,13 @@ export const DashboardLayout: React.FC = () => {
                     </Link>
                   </li>
                 )}
-                {/* TODO: Implementar configurações <li>
+                {/* TODO: Implementar configurações */}
+                <li>
                   <Link to="/settings" className="flex items-center gap-2 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-brand-600">
                     <Settings className="w-4 h-4" />
                     Configurações
                   </Link>
-                </li> */}
+                </li>
 
                 {/* Logout - Separated */}
                 <li className="border-t border-slate-50">
