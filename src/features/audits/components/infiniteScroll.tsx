@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, CheckCircle2, AlertCircle, Clock, XCircle, ClipboardCheck } from 'lucide-react';
+import { Calendar, ClipboardCheck } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import Empty from '@/components/ui/Empty';
@@ -47,15 +47,35 @@ export const InfiniteScrollList: React.FC<InfiniteScrollListProps> = ({
   const getStatusBadge = (status: AuditStockStatus) => {
     switch (status) {
       case AuditStockStatus.STARTED:
-        return <span className="badge badge-info gap-1 text-xs font-medium"><Clock className="w-3 h-3" /> Em Aberto</span>;
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100">
+            <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+            Em Aberto
+          </span>
+        );
       case AuditStockStatus.PAUSED:
-        return <span className="badge badge-warning gap-1 text-xs font-medium"><AlertCircle className="w-3 h-3" /> Em Andamento</span>;
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-100">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+            Em Andamento
+          </span>
+        );
       case AuditStockStatus.COMPLETED:
-        return <span className="badge badge-success gap-1 text-xs font-medium text-white"><CheckCircle2 className="w-3 h-3" /> Concluída</span>;
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-100">
+            <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+            Concluída
+          </span>
+        );
       case AuditStockStatus.CANCELED:
-        return <span className="badge badge-error gap-1 text-xs font-medium text-white"><XCircle className="w-3 h-3" /> Cancelada</span>;
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-red-50 text-red-700 border border-red-100">
+            <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+            Cancelada
+          </span>
+        );
       default:
-        return <span className="badge badge-ghost">{status}</span>;
+        return <span className="text-slate-400 capitalize">{(status as string).toLowerCase()}</span>;
     }
   };
 
@@ -95,12 +115,11 @@ export const InfiniteScrollList: React.FC<InfiniteScrollListProps> = ({
         <table className="table w-full">
           <thead>
             <tr className="bg-slate-50 border-b border-slate-100 text-slate-500 text-xs uppercase">
-              <th className="font-semibold py-4">Código</th>
-              <th className="font-semibold py-4">Tipo</th>
-              <th className="font-semibold py-4">Status</th>
-              <th className="font-semibold py-4">Progresso</th>
-              <th className="font-semibold py-4">Data Início</th>
-              <th className="font-semibold py-4 text-right">Ações</th>
+              <th className="px-6 py-4 font-semibold">Código</th>
+              <th className="px-6 py-4 font-semibold">Tipo</th>
+              <th className="px-6 py-4 font-semibold text-center">Status</th>
+              <th className="px-6 py-4 font-semibold">Progresso</th>
+              <th className="px-6 py-4 font-semibold text-right">Data Início</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -111,20 +130,20 @@ export const InfiniteScrollList: React.FC<InfiniteScrollListProps> = ({
 
               return (
                 <tr key={audit.id} className="hover:bg-slate-50 transition-colors cursor-pointer" onClick={() => navigate(`/audits/${audit.id}`)}>
-                  <td className="py-4">
+                  <td className="px-6 py-4">
                     <div className="font-medium text-slate-800">{audit.code}</div>
                     <div className="text-xs text-slate-500">Criado por {audit.responsible?.name}</div>
                   </td>
-                  <td className="py-4">
+                  <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
                       <span className={`w-2 h-2 rounded-full ${audit.type === AuditStockType.CYCLIC ? 'bg-purple-500' : 'bg-blue-500'}`} />
                       <span className="font-medium text-slate-700">{getTypeLabel(audit.type)}</span>
                     </div>
                   </td>
-                  <td className="py-4">
+                  <td className="px-6 py-4 text-center">
                     {getStatusBadge(audit.status)}
                   </td>
-                  <td className="py-4 w-48">
+                  <td className="px-6 py-4 w-48">
                     <div className="flex items-center gap-3">
                       <span className="font-bold text-slate-700">{progress}%</span>
                       <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
@@ -136,16 +155,11 @@ export const InfiniteScrollList: React.FC<InfiniteScrollListProps> = ({
                       <span className="text-xs text-slate-400 whitespace-nowrap">{countedItems}/{totalItems}</span>
                     </div>
                   </td>
-                  <td className="py-4">
-                    <div className="flex items-center gap-2 text-slate-600 text-sm">
+                  <td className="px-6 py-4 text-right">
+                    <div className="flex items-center justify-end gap-2 text-slate-600 text-sm">
                       <Calendar className="w-4 h-4 text-slate-400" />
                       {format(new Date(audit.started_at || audit.created_at), 'dd/MM/yyyy', { locale: ptBR })}
                     </div>
-                  </td>
-                  <td className="py-4 text-right">
-                    <button className="btn btn-ghost btn-sm btn-square">
-                      <span className="text-slate-400 text-lg">›</span>
-                    </button>
                   </td>
                 </tr>
               );
