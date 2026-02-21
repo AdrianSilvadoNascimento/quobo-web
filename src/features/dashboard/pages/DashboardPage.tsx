@@ -1,14 +1,25 @@
-import React from 'react';
-import { TrendingUp, Package, AlertCircle, DollarSign, Activity } from 'lucide-react';
+import React, { useState } from 'react';
+import { TrendingUp, Package, AlertCircle, DollarSign, Activity, ChevronDown, Filter } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useWebSocketDashboard } from '../../../hooks/useWebSocketDashboard';
 import { DashboardSkeletons } from '../components/DashboardSkeletons';
 import { MovementFlowChart } from '../components/MovementFlowChart';
 import { TopMovedItemsCard } from '../components/TopMovedItemsCard';
+import { Button } from '@/components/ui';
+
+type Period = '7d' | '30d' | '1m';
 
 export const DashboardPage: React.FC = () => {
   const { account } = useAuth();
   const accountId = account?.id || '';
+
+  const periods = [
+    { value: '7d', label: 'Últimos 7 dias' },
+    { value: '30d', label: 'Últimos 30 dias' },
+    { value: '1m', label: 'Este mês' },
+  ];
+
+  const [period, setPeriod] = useState(periods[0]);
 
   const { data, loading, error, connected } = useWebSocketDashboard(accountId);
 
@@ -42,6 +53,17 @@ export const DashboardPage: React.FC = () => {
     }).format(value);
   };
 
+  const handlePeriodChange = (p: Period) => {
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+
+    const newPeriod = periods.find((period) => period.value === p);
+    if (newPeriod) {
+      setPeriod(newPeriod);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -57,11 +79,31 @@ export const DashboardPage: React.FC = () => {
             )}
           </p>
         </div>
-        <select className="w-40 select select-secondary">
-          <option>Últimos 7 dias</option>
-          <option>Últimos 30 dias</option>
-          <option>Este mês</option>
-        </select>
+        <div className="dropdown dropdown-start md:dropdown-end">
+          <Button
+            tabIndex={0}
+            variant="ghost"
+            size="sm"
+            icon={<Filter className="w-4 h-4" />}
+          >
+            <span className="text-slate-600">
+              {period.label}
+            </span>
+            <ChevronDown className="w-4 h-4 opacity-50" />
+          </Button>
+          <ul
+            tabIndex={0}
+            className="dropdown-content menu p-2 shadow bg-white rounded-box w-52 z-50"
+          >
+            {periods.map((p) => (
+              <li key={p.value}>
+                <a onClick={() => handlePeriodChange(p.value as Period)}>
+                  {p.label}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
 
       {/* Metrics Cards */}

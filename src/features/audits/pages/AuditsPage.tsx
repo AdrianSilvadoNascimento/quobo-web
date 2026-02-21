@@ -108,13 +108,15 @@ export const AuditsPage: React.FC = () => {
           </div>
         </div>
 
-        {/* List */}
-        <InfiniteScrollList
-          audits={audits}
-          hasMore={hasMore}
-          loading={loading}
-          loadMore={loadMore}
-        />
+        <div className="p-6">
+          {/* List */}
+          <InfiniteScrollList
+            audits={audits}
+            hasMore={hasMore}
+            loading={loading}
+            loadMore={loadMore}
+          />
+        </div>
       </div>
     </div>
   );

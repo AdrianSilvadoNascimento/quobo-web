@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 
 import { Check, Star, Shield, Zap, HelpCircle, Lightbulb } from 'lucide-react';
+import { toast } from 'sonner';
 
 import type { PlanModel } from '@/features/checkout/types/plan.model';
 
@@ -90,7 +91,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ withHeader = false }
       }
     } catch (error) {
       console.error('Erro ao iniciar checkout:', error);
-      alert('Não foi possível iniciar o checkout. Tente novamente.');
+      toast.error('Não foi possível iniciar o checkout. Tente novamente.');
       setIsCheckoutLoading(false);
     }
   };

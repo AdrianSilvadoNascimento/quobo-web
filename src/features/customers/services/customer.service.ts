@@ -11,7 +11,7 @@ export class CustomerService {
 
   async getCustomerById(customer_id: string) {
     try {
-      const { data } = await server.api.get(`/customer/by-id/${customer_id}`, { withCredentials: true });
+      const { data } = await server.api.get(`/customer/${customer_id}`, { withCredentials: true });
       return data;
     } catch (error) {
       console.error('Error fetching customer:', error);

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { CreditCard, Download, Clock, CheckCircle, RefreshCw, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { accountApi } from '@/services/accountApi';
@@ -8,12 +8,14 @@ import { planService } from '@/features/checkout/services/plan.service';
 
 import { useSubscriptionSocket } from '@/hooks/useSubscriptionSocket';
 import { Button } from '@/components/ui';
+import { toast } from 'sonner';
 
 export const FinancePage: React.FC = () => {
-  const { account } = useAuth();
+  const { account, refreshToken } = useAuth();
   const [isCancelModalOpen, setIsCancelModalOpen] = React.useState(false);
   const [retryingInvoice, setRetryingInvoice] = React.useState<string | null>(null);
   const accountId = account?.id;
+  const queryClient = useQueryClient();
 
   const { lastUpdate } = useSubscriptionSocket(accountId);
 
@@ -84,9 +86,27 @@ export const FinancePage: React.FC = () => {
       }
     } catch (error) {
       console.error('Erro ao redirecionar para o portal:', error);
-      alert('Não foi possível abrir o portal de pagamento. Tente novamente mais tarde.');
+      toast.error('Não foi possível abrir o portal de pagamento. Tente novamente mais tarde.');
     }
   };
+
+  const handleRetryPayment = async (invoiceId: string) => {
+    setRetryingInvoice(invoiceId);
+    try {
+      const result = await accountApi.retryInvoicePayment(invoiceId);
+      if (result.success) {
+        toast.success(result.message);
+        await refreshToken();
+        queryClient.invalidateQueries({ queryKey: ['finance'] });
+      } else {
+        toast.error(result.message);
+      }
+    } catch (error) {
+      toast.error('Erro ao tentar novamente');
+    } finally {
+      setRetryingInvoice(null);
+    }
+  }
 
   if (isLoading) {
     return (
@@ -304,22 +324,7 @@ export const FinancePage: React.FC = () => {
                           {invoice.status !== 'paid' && (
                             <Button
                               variant='ghost'
-                              onClick={async () => {
-                                setRetryingInvoice(invoice.id);
-                                try {
-                                  const result = await accountApi.retryInvoicePayment(invoice.id);
-                                  if (result.success) {
-                                    alert(result.message);
-                                    refetch();
-                                  } else {
-                                    alert(result.message);
-                                  }
-                                } catch (error) {
-                                  alert('Erro ao tentar novamente');
-                                } finally {
-                                  setRetryingInvoice(null);
-                                }
-                              }}
+                              onClick={() => handleRetryPayment(invoice.id)}
                               disabled={retryingInvoice === invoice.id}
                               className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-brand-600 hover:text-brand-700 hover:bg-brand-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                               title="Tentar pagamento novamente"

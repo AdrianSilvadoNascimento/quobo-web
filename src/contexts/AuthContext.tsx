@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useRef, type ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, useCallback, type ReactNode } from 'react';
 import { authService } from '../features/auth/services/auth.service';
 import type { UserModel } from '@/features/account/types/user.model';
 import type { AccountModel, SubscriptionModel } from '@/features/account/types/account.model';
@@ -46,7 +46,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const isRefreshing = useRef(false);
 
-  const updateUserData = (data: any) => {
+  const updateUserData = useCallback((data: any) => {
     setUser(data.account_user);
     setAccount(data.account);
     setSubscription(data.subscription);
@@ -80,9 +80,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     localStorage.setItem('is_trial', data.is_trial.toString());
     localStorage.setItem('is_assinant', data.is_assinant.toString());
     localStorage.setItem('expiration_date', data.expiration_date?.toString() || '');
-  };
+  }, []);
 
-  const clearUserData = () => {
+  const clearUserData = useCallback(() => {
     setUser(null);
     setAccount(null);
     setSubscription(null);
@@ -94,7 +94,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     authService.setAccessToken(null);
     localStorage.clear();
     queryClient.clear(); // Clear all React Query cached data
-  };
+  }, []);
 
   const initializeAuth = async () => {
     const hasSession = localStorage.getItem('session_active') === 'true';
@@ -140,11 +140,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     initializeAuth();
   }, []);
 
-  // Listen for delinquency (403) events from the API interceptor
   useEffect(() => {
     const handleDelinquency = () => {
-      // Refresh token to get updated subscription status
-      // The /auth/refresh endpoint has @SkipDelinquency() so it always works
       refreshToken();
     };
 
@@ -154,7 +151,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
   }, []);
 
-  const login = async (args: { email: string; password: string; remember?: boolean }) => {
+  const login = useCallback(async (args: { email: string; password: string; remember?: boolean }) => {
     try {
       setIsLoading(true);
       const data = await authService.login(args);
@@ -173,9 +170,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [updateUserData, clearUserData]);
 
-  const loginWithGoogle = async () => {
+  const loginWithGoogle = useCallback(async () => {
     try {
       setIsLoading(true);
       const result = await signInWithPopup(auth, googleProvider);
@@ -198,9 +195,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [updateUserData, clearUserData]);
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
       setIsLoading(true);
       await authService.logout();
@@ -210,30 +207,27 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       clearUserData();
       setIsLoading(false);
     }
-  };
+  }, [clearUserData]);
 
-  const forgotPassword = async (email: string) => {
+  const forgotPassword = useCallback(async (email: string) => {
     try {
       await authService.forgotPassword(email);
     } catch (error) {
       console.error("Forgot password failed", error);
     }
-  };
+  }, []);
 
-  // Trial expired: expirationDays <= 0 and not a paying subscriber
   const isTrialExpired = (expirationDays !== null && expirationDays <= 0 && !isAssinant);
-  // Paying subscriber but subscription is suspended (past_due), pending, or expired
   const isSubscriptionSuspended = isAssinant && (
     subscription?.status === 'SUSPENDED' ||
     subscription?.status === 'PENDING' ||
     subscription?.status === 'EXPIRED' ||
     (subscription?.is_expired === true)
   );
-  // Block access for both trial expired AND suspended/expired paying subscriptions
   const isSubscriptionExpired = isTrialExpired || isSubscriptionSuspended;
   const isAdmin = user?.type === 'OWNER' || user?.type === 'ADMIN';
 
-  const refreshToken = async () => {
+  const refreshToken = useCallback(async () => {
     if (isRefreshing.current) return;
 
     try {
@@ -249,7 +243,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     } finally {
       isRefreshing.current = false;
     }
-  };
+  }, [updateUserData]);
 
   return (
     <AuthContext.Provider value={{
