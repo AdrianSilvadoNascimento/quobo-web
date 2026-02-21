@@ -8,7 +8,7 @@ import { AccountInfoSection } from '../components/AccountInfoSection';
 import { Button } from '@/components/ui';
 
 export const ProfilePage: React.FC = () => {
-  const { user, updateSubscriptionStatus } = useAuth();
+  const { user, refreshToken } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
@@ -148,7 +148,7 @@ export const ProfilePage: React.FC = () => {
         setSuccessMessage('Perfil atualizado com sucesso!');
 
         // Refresh user data
-        await updateSubscriptionStatus();
+        await refreshToken();
 
         // Clear success message after 3 seconds
         setTimeout(() => setSuccessMessage(''), 3000);

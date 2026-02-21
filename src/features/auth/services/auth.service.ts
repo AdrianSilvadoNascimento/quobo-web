@@ -5,6 +5,8 @@ export class AuthService {
   accessToken: string | null = null;
   isRefreshing: boolean = false;
   refreshQueue: ((token?: string) => void)[] = [];
+  private onDelinquencyCallback: (() => void) | null = null;
+  private delinquencyDetected: boolean = false;
 
   constructor() { }
 
@@ -24,12 +26,58 @@ export class AuthService {
     this.accessToken = token;
   }
 
+  /**
+   * Register a callback to be called when a 403 delinquency is detected
+   */
+  onDelinquency(callback: (() => void) | null) {
+    this.onDelinquencyCallback = callback;
+  }
+
+  /**
+   * Trigger the delinquency callback (called from interceptor)
+   * Only fires once to prevent infinite loops
+   */
+  triggerDelinquency() {
+    if (this.delinquencyDetected) return;
+    this.delinquencyDetected = true;
+    this.onDelinquencyCallback?.();
+  }
+
+  /**
+   * Reset delinquency flag (called when subscription status is resolved)
+   */
+  resetDelinquency() {
+    this.delinquencyDetected = false;
+  }
+
   async login(params: { email: string; password: string; remember?: boolean }) {
     try {
       const { email, password, remember } = params;
       const { data } = await server.api.post<LoginResponseEntity>(
         '/auth/login',
-        { email, password, remember },
+        {
+          email,
+          password,
+          remember,
+          platform: 'web' // Explicitly set platform for web client
+        },
+        { withCredentials: true }
+      );
+      return data;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async loginWithGoogle(idToken: string, displayName?: string, photoURL?: string) {
+    try {
+      const { data } = await server.api.post<LoginResponseEntity>(
+        '/auth/google',
+        {
+          idToken,
+          displayName,
+          photoURL
+        },
         { withCredentials: true }
       );
       return data;
@@ -195,6 +243,13 @@ server.api.interceptors.response.use(
       } finally {
         authService.isRefreshing = false;
       }
+    }
+
+    if (err.response?.status === 403 && !original._retry403) {
+      original._retry403 = true;
+      // Delinquency detected — trigger subscription status refresh
+      authService.triggerDelinquency();
+      return Promise.reject(err);
     }
 
     return Promise.reject(err);

@@ -2,11 +2,15 @@ import React, { createContext, useContext, useState, useEffect, useRef, type Rea
 import { authService } from '../features/auth/services/auth.service';
 import type { UserModel } from '@/features/account/types/user.model';
 import type { AccountModel, SubscriptionModel } from '@/features/account/types/account.model';
+import { auth, googleProvider } from '../config/firebase';
+import { signInWithPopup } from 'firebase/auth';
+import { queryClient } from '../main';
 
 interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (args: { email: string; password: string; remember?: boolean }) => Promise<void>;
+  loginWithGoogle: () => Promise<void>;
   logout: () => void;
   forgotPassword: (email: string) => Promise<void>;
   user: UserModel | null;
@@ -16,8 +20,10 @@ interface AuthContextType {
   isTrial: boolean;
   isAssinant: boolean;
   expirationDate: Date | null;
+  sessionExpiresAt: Date | null;
   isSubscriptionExpired: boolean;
-  updateSubscriptionStatus: () => void;
+  isSubscriptionSuspended: boolean;
+  refreshToken: () => void;
   isAdmin: boolean;
 }
 
@@ -36,6 +42,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [isTrial, setIsTrial] = useState<boolean>(false);
   const [isAssinant, setIsAssinant] = useState<boolean>(false);
   const [expirationDate, setExpirationDate] = useState<Date | null>(null);
+  const [sessionExpiresAt, setSessionExpiresAt] = useState<Date | null>(null);
 
   const isRefreshing = useRef(false);
 
@@ -47,9 +54,25 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setIsTrial(data.is_trial);
     setIsAssinant(data.is_assinant);
     setExpirationDate(data.expiration_date ? new Date(data.expiration_date) : null);
+
+    // Parse session expiry
+    if (data.session_expires_at) {
+      setSessionExpiresAt(new Date(data.session_expires_at));
+      localStorage.setItem('session_expires_at', data.session_expires_at);
+    } else {
+      setSessionExpiresAt(null);
+      localStorage.removeItem('session_expires_at');
+    }
+
     setIsAuthenticated(true);
 
     localStorage.setItem('session_active', 'true');
+    if (data.remember_me) {
+      localStorage.setItem('remember_me', 'true');
+    } else {
+      localStorage.removeItem('remember_me');
+    }
+
     localStorage.setItem('user_data', JSON.stringify(data.account_user));
     localStorage.setItem('account_data', JSON.stringify(data.account));
     localStorage.setItem('subscription_data', JSON.stringify(data.subscription));
@@ -70,6 +93,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setIsAuthenticated(false);
     authService.setAccessToken(null);
     localStorage.clear();
+    queryClient.clear(); // Clear all React Query cached data
   };
 
   const initializeAuth = async () => {
@@ -79,6 +103,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setIsLoading(false);
       return;
     }
+
+    // Attempt to restore session data from localStorage first for sticky UI
+    try {
+      const storedUser = localStorage.getItem('user_data');
+      if (storedUser) setUser(JSON.parse(storedUser));
+
+      const sessionExpiry = localStorage.getItem('session_expires_at');
+      if (sessionExpiry) setSessionExpiresAt(new Date(sessionExpiry));
+    } catch { }
 
     try {
       if (!restorationPromise) {
@@ -107,6 +140,20 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     initializeAuth();
   }, []);
 
+  // Listen for delinquency (403) events from the API interceptor
+  useEffect(() => {
+    const handleDelinquency = () => {
+      // Refresh token to get updated subscription status
+      // The /auth/refresh endpoint has @SkipDelinquency() so it always works
+      refreshToken();
+    };
+
+    authService.onDelinquency(handleDelinquency);
+    return () => {
+      authService.onDelinquency(null);
+    };
+  }, []);
+
   const login = async (args: { email: string; password: string; remember?: boolean }) => {
     try {
       setIsLoading(true);
@@ -121,6 +168,31 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       updateUserData(data);
     } catch (error) {
       console.error("Login failed", error);
+      clearUserData();
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const loginWithGoogle = async () => {
+    try {
+      setIsLoading(true);
+      const result = await signInWithPopup(auth, googleProvider);
+      const user = result.user;
+      const idToken = await user.getIdToken();
+
+      const data = await authService.loginWithGoogle(idToken, user.displayName || undefined, user.photoURL || undefined);
+
+      if (!data?.token) {
+        throw new Error('Invalid response from server');
+      }
+
+      authService.setAccessToken(data.token);
+
+      updateUserData(data);
+    } catch (error) {
+      console.error("Google Login failed", error);
       clearUserData();
       throw error;
     } finally {
@@ -148,10 +220,20 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  const isSubscriptionExpired = (expirationDays !== null && expirationDays <= 0 && !isAssinant);
+  // Trial expired: expirationDays <= 0 and not a paying subscriber
+  const isTrialExpired = (expirationDays !== null && expirationDays <= 0 && !isAssinant);
+  // Paying subscriber but subscription is suspended (past_due), pending, or expired
+  const isSubscriptionSuspended = isAssinant && (
+    subscription?.status === 'SUSPENDED' ||
+    subscription?.status === 'PENDING' ||
+    subscription?.status === 'EXPIRED' ||
+    (subscription?.is_expired === true)
+  );
+  // Block access for both trial expired AND suspended/expired paying subscriptions
+  const isSubscriptionExpired = isTrialExpired || isSubscriptionSuspended;
   const isAdmin = user?.type === 'OWNER' || user?.type === 'ADMIN';
 
-  const updateSubscriptionStatus = async () => {
+  const refreshToken = async () => {
     if (isRefreshing.current) return;
 
     try {
@@ -174,6 +256,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       isAuthenticated,
       isLoading,
       login,
+      loginWithGoogle,
       logout,
       forgotPassword,
       user,
@@ -184,8 +267,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       isAssinant,
       expirationDate,
       isSubscriptionExpired,
-      updateSubscriptionStatus,
-      isAdmin
+      isSubscriptionSuspended,
+      refreshToken,
+      isAdmin,
+      sessionExpiresAt
     }}>
       {children}
     </AuthContext.Provider>

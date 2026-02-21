@@ -13,7 +13,7 @@ export const CheckoutSuccessPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { updateSubscriptionStatus } = useAuth();
+  const { refreshToken } = useAuth();
   const [state, setState] = useState<PageState>('loading');
   const [sessionData, setSessionData] = useState<{
     id: string;
@@ -43,7 +43,7 @@ export const CheckoutSuccessPage: React.FC = () => {
           queryClient.invalidateQueries({ queryKey: ['auth'] });
 
           // CRÍTICO: Atualizar contexto de autenticação para fechar modal de assinatura expirada
-          updateSubscriptionStatus();
+          refreshToken();
         } else {
           setState('error');
         }
@@ -54,7 +54,7 @@ export const CheckoutSuccessPage: React.FC = () => {
     };
 
     verifySession();
-  }, [searchParams, queryClient, updateSubscriptionStatus]);
+  }, [searchParams, queryClient, refreshToken]);
 
   const handleGoToDashboard = () => {
     navigate('/dashboard');

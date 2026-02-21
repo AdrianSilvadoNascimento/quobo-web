@@ -23,7 +23,7 @@ export const StripeCheckoutModal: React.FC<StripeCheckoutModalProps> = ({
   const navigate = useNavigate();
   const stripe = useStripe();
   const elements = useElements();
-  const { updateSubscriptionStatus } = useAuth();
+  const { refreshToken } = useAuth();
 
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -95,7 +95,7 @@ export const StripeCheckoutModal: React.FC<StripeCheckoutModalProps> = ({
         paymentMethodId: paymentMethod.id,
       });
 
-      updateSubscriptionStatus();
+      refreshToken();
 
       setIsSuccessOpen(true);
       triggerConfetti();

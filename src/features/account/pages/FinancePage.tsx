@@ -57,8 +57,9 @@ export const FinancePage: React.FC = () => {
         : 'R$ 0,00',
       daysUntilRelevantDate,
       billing_period: billingPeriod,
+      hasPendingPayment: financeData?.invoices?.length > 0 && financeData.invoices[0]?.status !== 'paid',
     };
-  }, [financeData?.subscription]);
+  }, [financeData?.subscription, financeData?.invoices]);
 
   const formattedInvoices = useMemo(() => {
     if (!financeData?.invoices) return [];
@@ -134,7 +135,9 @@ export const FinancePage: React.FC = () => {
               <div className="mt-2 flex flex-col gap-1">
                 <p className="text-sm font-medium">
                   Status: {' '}
-                  {formattedSubscription?.is_expired ? (
+                  {(formattedSubscription?.status === 'SUSPENDED' || formattedSubscription?.hasPendingPayment) ? (
+                    <span className="text-red-600">Pagamento Pendente</span>
+                  ) : formattedSubscription?.is_expired ? (
                     <span className="text-red-600">Expirado</span>
                   ) : formattedSubscription?.isCanceled ? (
                     <span className="text-orange-600">Cancelamento Agendado</span>
@@ -151,11 +154,16 @@ export const FinancePage: React.FC = () => {
                       ? 'Acesso disponível até: '
                       : formattedSubscription.is_trial
                         ? 'Teste válido até: '
-                        : 'Próxima renovação: '}
+                        : (formattedSubscription.status === 'SUSPENDED' || formattedSubscription.hasPendingPayment)
+                          ? 'Vencimento: '
+                          : 'Próxima renovação: '}
                     <strong className="text-slate-700">{formattedSubscription.relevantDateFormatted}</strong>
                     {formattedSubscription.daysUntilRelevantDate !== null && (
                       <span className="text-xs ml-2 text-slate-400">
-                        (em {formattedSubscription.daysUntilRelevantDate} dias)
+                        {formattedSubscription.daysUntilRelevantDate < 0
+                          ? `(vencida há ${Math.abs(formattedSubscription.daysUntilRelevantDate)} dias)`
+                          : `(em ${formattedSubscription.daysUntilRelevantDate} dias)`
+                        }
                       </span>
                     )}
                   </p>

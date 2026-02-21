@@ -3,6 +3,7 @@ import { useLocation, Outlet, useNavigate, Link } from 'react-router-dom';
 import { Sidebar, Menu, MenuItem } from 'react-pro-sidebar';
 import { useAuth } from '../contexts/AuthContext';
 import { ExpiredSubscriptionModal } from '../components/ExpiredSubscriptionModal';
+import { SessionExpiryModal } from '@/features/auth/components/SessionExpiryModal';
 import {
   LayoutDashboard,
   Package,
@@ -25,12 +26,27 @@ import QuoboIcon from '@/assets/quobo-icon.svg';
 import { useSubscriptionSocket } from '../hooks/useSubscriptionSocket';
 import { authService } from '@/features/auth/services/auth.service';
 import { Button } from '@/components/ui';
+import { useTimer } from '@/hooks/useTimer';
 
 export const DashboardLayout: React.FC = () => {
-  const { logout, user, account, expirationDays, isTrial, subscription, isSubscriptionExpired, updateSubscriptionStatus, isAdmin } = useAuth();
+  const {
+    logout,
+    user,
+    account,
+    expirationDays,
+    isTrial,
+    subscription,
+    isSubscriptionExpired,
+    isSubscriptionSuspended,
+    refreshToken,
+    isAdmin,
+    sessionExpiresAt
+  } = useAuth();
+
   const [collapsed, setCollapsed] = useState(false);
   const [toggled, setToggled] = useState(false);
   const [modalDismissed, setModalDismissed] = useState(false);
+  const [isChangingToken, setIsChangingToken] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -39,9 +55,9 @@ export const DashboardLayout: React.FC = () => {
 
   useEffect(() => {
     if (lastUpdate) {
-      updateSubscriptionStatus();
+      refreshToken();
     }
-  }, [lastUpdate, updateSubscriptionStatus]);
+  }, [lastUpdate, refreshToken]);
 
   const [isResending, setIsResending] = useState(false);
   const [resendSuccess, setResendSuccess] = useState(false);
@@ -79,11 +95,17 @@ export const DashboardLayout: React.FC = () => {
 
   const isActive = (path: string) => location.pathname === path;
 
+  // Allowed paths for delinquent users (suspended or expired)
+  const delinquentAllowedPaths = ['/checkout', '/account/finance', '/plans'];
+  const isOnAllowedPath = delinquentAllowedPaths.some(p => location.pathname.startsWith(p));
+
   useEffect(() => {
-    if (isSubscriptionExpired && location.pathname !== '/checkout') {
-      navigate('/checkout', { replace: true });
+    if (isSubscriptionExpired && !isOnAllowedPath) {
+      // Suspended users go to finance first, expired/trial go to checkout
+      const redirectPath = isSubscriptionSuspended ? '/account/finance' : '/checkout';
+      navigate(redirectPath, { replace: true });
     }
-  }, [isSubscriptionExpired, location.pathname, navigate]);
+  }, [isSubscriptionExpired, isSubscriptionSuspended, isOnAllowedPath, location.pathname, navigate]);
 
   useEffect(() => {
     if (isSubscriptionExpired) {
@@ -98,6 +120,57 @@ export const DashboardLayout: React.FC = () => {
 
   const togglePanelIcon = (isCollapsed: boolean) => {
     return isCollapsed ? <PanelRightClose className="w-6 h-6" /> : <PanelLeftClose className="w-6 h-6" />;
+  };
+
+  const [showExpiryModal, setShowExpiryModal] = useState(false);
+  const fiveMin = 5 * 60; // 5 minutes in seconds
+
+  const { start, reset, pause, formatTime } = useTimer({
+    initialTime: fiveMin,
+    onTimeOver: () => {
+      // Time is up! User didn't interact.
+      logout();
+    }
+  });
+
+  useEffect(() => {
+    const checkExpiry = () => {
+      if (!sessionExpiresAt) return;
+
+      const now = new Date();
+      const timeDiff = sessionExpiresAt.getTime() - now.getTime();
+      const minutesLeft = timeDiff / (1000 * 60);
+
+      if (minutesLeft <= 5 && minutesLeft > 0) {
+        if (!showExpiryModal) {
+          setShowExpiryModal(true);
+          reset();
+          start();
+        }
+      } else if (minutesLeft <= 0) {
+        logout();
+      }
+    };
+
+    const interval = setInterval(checkExpiry, 30000); // Check every 30s
+    checkExpiry(); // Check immediately
+
+    return () => clearInterval(interval);
+  }, [sessionExpiresAt, showExpiryModal, start, reset]);
+
+  const handleContinueSession = async () => {
+    try {
+      setIsChangingToken(true);
+      await refreshToken();
+      setShowExpiryModal(false);
+      pause();
+      reset();
+    } catch (e) {
+      console.error("Failed to extend session", e);
+      logout();
+    } finally {
+      setIsChangingToken(false);
+    }
   };
 
   return (
@@ -387,8 +460,23 @@ export const DashboardLayout: React.FC = () => {
         </main>
       </div>
 
-      {/* Expired Subscription Modal - shows until user clicks choose plan */}
-      {isSubscriptionExpired && !modalDismissed && <ExpiredSubscriptionModal isTrial={isTrial} onChoosePlan={handleModalDismiss} />}
+      {/* Expired/Suspended Subscription Modal */}
+      {/* For suspended users: modal shows on any page, dismissable to allow interaction with finance */}
+      {/* For expired/trial: modal shows and dismisses when user clicks choose plan */}
+      {isSubscriptionExpired && !modalDismissed && (
+        <ExpiredSubscriptionModal
+          isTrial={isTrial}
+          onChoosePlan={handleModalDismiss}
+        />
+      )}
+
+      <SessionExpiryModal
+        isOpen={showExpiryModal}
+        onContinue={handleContinueSession}
+        isChangingToken={isChangingToken}
+        onLogout={logout}
+        timeLeft={formatTime()}
+      />
     </div>
   );
 };

@@ -12,5 +12,6 @@ export class LoginResponseEntity {
   expiration_days!: number;
   account_id!: string;
   expiresIn!: number;
+  session_expires_at!: string;
   remember_me!: boolean;
 }

@@ -26,7 +26,7 @@ interface FormData {
 
 export const OnboardingForm: React.FC = () => {
   const { setNeedsOnboarding, checkOnboarding } = useOnboarding();
-  const { user, account, updateSubscriptionStatus } = useAuth();
+  const { user, account, refreshToken } = useAuth();
 
   const [formData, setFormData] = useState<FormData>({
     name: account?.name || '',
@@ -235,7 +235,7 @@ export const OnboardingForm: React.FC = () => {
       await onboardingService.completeOnboarding(data);
 
       // Update auth context
-      await updateSubscriptionStatus();
+      await refreshToken();
 
       // Update onboarding status
       setNeedsOnboarding(false);

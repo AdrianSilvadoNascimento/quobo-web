@@ -12,12 +12,12 @@ interface OnboardingContextType {
 const OnboardingContext = createContext<OnboardingContextType | undefined>(undefined);
 
 export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, isSubscriptionExpired } = useAuth();
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
   const [isCheckingOnboarding, setIsCheckingOnboarding] = useState(false);
 
   const checkOnboarding = async () => {
-    if (!isAuthenticated || !user) {
+    if (!isAuthenticated || !user || isSubscriptionExpired) {
       setNeedsOnboarding(false);
       return;
     }
@@ -35,10 +35,10 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
   };
 
   useEffect(() => {
-    if (isAuthenticated && user) {
+    if (isAuthenticated && user && !isSubscriptionExpired) {
       checkOnboarding();
     }
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated, user, isSubscriptionExpired]);
 
   return (
     <OnboardingContext.Provider

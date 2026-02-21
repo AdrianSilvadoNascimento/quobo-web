@@ -25,7 +25,7 @@ interface CheckoutModalProps {
 
 export const CheckoutModal: React.FC<CheckoutModalProps> = ({ plan, isOpen, onClose }) => {
   const navigate = useNavigate();
-  const { updateSubscriptionStatus, user, account } = useAuth();
+  const { refreshToken, user, account } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccessOpen, setIsSuccessOpen] = useState(false);
   const [isFlipped, setIsFlipped] = useState(false);
@@ -201,7 +201,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ plan, isOpen, onCl
       });
 
       // Update subscription status before showing success
-      updateSubscriptionStatus();
+      refreshToken();
 
       // Show success modal and confetti
       setIsSuccessOpen(true);
