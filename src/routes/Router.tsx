@@ -7,6 +7,8 @@ import { RegisterPage } from '../features/auth/pages/RegisterPage';
 import { DashboardPage } from '../features/dashboard/pages/DashboardPage';
 import { MovementsPage } from '../features/movements/pages/MovementsPage';
 import { CustomersPage } from '../features/customers/pages/CustomersPage';
+import { TeamPage } from '@/features/team/pages/TeamPage';
+import { InviteAcceptPage } from '@/features/team/pages/InviteAcceptPage';
 import { DashboardLayout } from '../layouts/DashboardLayout';
 import { ItemsPage } from '../features/items/pages/ItemsPage';
 import { ItemForm } from '../features/items/pages/ItemForm';
@@ -15,6 +17,7 @@ import { AccountLayout } from '@/features/account/layouts/AccountLayout';
 import { ProfilePage } from '@/features/account/pages/ProfilePage';
 import { FinancePage } from '@/features/account/pages/FinancePage';
 import { CheckoutPage } from '@/features/checkout/pages/CheckoutPage';
+import { CheckoutSuccessPage } from '@/features/checkout/pages/CheckoutSuccessPage';
 import CustomerForm from '@/features/customers/pages/CustomerForm';
 import { AuditsPage } from '@/features/audits/pages/AuditsPage';
 import { NewAuditPage } from '@/features/audits/pages/NewAuditPage';
@@ -22,9 +25,11 @@ import { AuditDetailsPage } from '@/features/audits/pages/AuditDetailsPage';
 import ForgotPassword from '@/features/auth/pages/ForgotPassword';
 import ResetPassword from '@/features/auth/pages/ResetPassword';
 import { EmailVerificationProcessingPage } from '@/features/auth/pages/EmailVerificationProcessingPage';
+import { ImportPage } from '@/features/import';
+import { FeatureGuard } from '@/components/FeatureGuard';
 
 export const Router: React.FC = () => {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
 
   if (isLoading) {
     return (
@@ -42,6 +47,10 @@ export const Router: React.FC = () => {
       <Route path="/forgot-password" element={!isAuthenticated ? <ForgotPassword /> : <Navigate to="/dashboard" />} />
       <Route path="/reset-password" element={!isAuthenticated ? <ResetPassword /> : <Navigate to="/dashboard" />} />
       <Route path="/verify-email" element={<EmailVerificationProcessingPage />} />
+      <Route path="/checkout/success" element={<CheckoutSuccessPage />} />
+
+      {/* Invite Accept - Always public, regardless of auth status */}
+      <Route path="/invite/accept/:token" element={<InviteAcceptPage />} />
 
       {/* Protected Routes */}
       {
@@ -59,12 +68,25 @@ export const Router: React.FC = () => {
             <Route path="/customers/new" element={<CustomerForm />} />
             <Route path="/customers/:id" element={<CustomerForm />} />
 
+            <Route path="/team" element={
+              <FeatureGuard check={(feature) => feature?.team_features?.enabled}>
+                <TeamPage />
+              </FeatureGuard>
+            } />
+
             <Route path="/categories" element={<CategoriesPage />} />
 
             {/* Audits Routes */}
             <Route path="/audits" element={<AuditsPage />} />
             <Route path="/audits/new" element={<NewAuditPage />} />
             <Route path="/audits/:id" element={<AuditDetailsPage />} />
+
+            {/* Import Route */}
+            <Route path="/import" element={
+              <FeatureGuard check={(feature) => feature?.import_features?.excel_import}>
+                <ImportPage />
+              </FeatureGuard>
+            } />
 
             {/* Checkout/Plans Routes */}
             <Route path="/checkout" element={<CheckoutPage />} />
@@ -74,7 +96,12 @@ export const Router: React.FC = () => {
             <Route path="/account" element={<AccountLayout />}>
               <Route index element={<Navigate to="profile" replace />} />
               <Route path="profile" element={<ProfilePage />} />
-              <Route path="finance" element={<FinancePage />} />
+              {/* Finance page is admin-only */}
+              <Route path="finance" element={
+                user?.type === 'OWNER' || user?.type === 'ADMIN'
+                  ? <FinancePage />
+                  : <Navigate to="/account/profile" replace />
+              } />
             </Route>
 
             <Route path="*" element={<Navigate to="/dashboard" replace />} />

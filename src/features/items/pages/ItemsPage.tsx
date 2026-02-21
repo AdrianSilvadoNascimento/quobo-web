@@ -1,13 +1,14 @@
-import React, { useCallback, useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Plus, X, SlidersHorizontal, Package } from 'lucide-react';
+import { useInfiniteQuery } from '@tanstack/react-query';
 import { item_service } from '../services/items.service';
-import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 import { useAuth } from '@/contexts/AuthContext';
 import type { ItemModel } from '../types/item.model';
 import { useDebounce } from '@/hooks/useDebounce';
 import { InfiniteScrollList } from '../components/InfiniteScrollList';
 import { InfiniteItemCards } from '../components/InfiniteCards';
+import { Button } from '@/components/ui';
 
 export const ItemsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -20,19 +21,40 @@ export const ItemsPage: React.FC = () => {
 
   const { account } = useAuth();
 
-  const fetchProducts = useCallback((page: number, limit: number) => {
-    return item_service.getProducts(page, limit)
-  }, [])
-
   const {
-    data: products,
-    loading,
-    hasMore,
-    loadMore,
-  } = useInfiniteScroll<ItemModel>({
-    fetchFunction: fetchProducts,
-    limit: 40,
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetching,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
+    queryKey: ['items', 'infinite'],
+    queryFn: async ({ pageParam = 0 }) => {
+      return item_service.getProducts(pageParam, 40);
+    },
+    getNextPageParam: (lastPage, _allPages) => {
+      // Se há mais itens, retorna a próxima página
+      if (lastPage.next) {
+        return _allPages.length;
+      }
+      return undefined;
+    },
+    initialPageParam: 0,
   });
+
+  // Combine all pages into a single array
+  const products = useMemo(() => {
+    return data?.pages.flatMap(page => page.data) ?? [];
+  }, [data]);
+
+  const loading = isFetching && !isFetchingNextPage;
+  const hasMore = hasNextPage ?? false;
+
+  const loadMore = () => {
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  };
 
   const performSearch = async (term: string) => {
     if (!term.trim()) {
@@ -85,13 +107,13 @@ export const ItemsPage: React.FC = () => {
           </div>
           <p className="text-slate-500 text-sm">Gerencie seu catálogo de produtos e níveis de estoque.</p>
         </div>
-        <button
+        <Button
           onClick={() => navigate('/products/new')}
-          className="btn bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center gap-2 text-sm font-medium shadow-sm transition-all"
+          size="sm"
+          icon={<Plus className="w-4 h-4" />}
         >
-          <Plus className="w-4 h-4" />
           Novo Produto
-        </button>
+        </Button>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-slate-100">

@@ -1,5 +1,6 @@
 import React from 'react';
 import { OnboardingForm } from './OnboardingForm';
+import { Button } from '@/components/ui';
 
 export const WelcomeModal: React.FC = () => {
   const [showWelcome, setShowWelcome] = React.useState(true);
@@ -58,12 +59,13 @@ export const WelcomeModal: React.FC = () => {
           </div>
 
           <div className="modal-action">
-            <button
-              className="btn btn-primary btn-lg w-full"
+            <Button
               onClick={() => setShowWelcome(false)}
+              size="lg"
+              className="w-full"
             >
               Começar Cadastro
-            </button>
+            </Button>
           </div>
         </div>
       </dialog>

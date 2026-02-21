@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Save, Tag } from 'lucide-react';
 import { CategoryModel } from '../types/category.model';
+import { Button } from '@/components/ui';
 
 interface CategoryModalProps {
   isOpen: boolean;
@@ -125,45 +126,37 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
             {/* Footer Buttons */}
             <div className="flex flex-col gap-3 pt-4">
               <div className="flex gap-3">
-                <button
+                <Button
+                  variant="secondary"
                   type="button"
                   onClick={handleClose}
                   disabled={isLoading}
-                  className="btn flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1"
                 >
                   Cancelar
-                </button>
-                <button
+                </Button>
+                <Button
                   type="submit"
-                  disabled={isLoading || !name.trim()}
-                  className="btn flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  disabled={!name.trim()}
+                  isLoading={isLoading}
+                  icon={<Save className="w-4 h-4" />}
+                  className="flex-1"
                 >
-                  {isLoading ? (
-                    <span className="loading loading-dots loading-md" />
-                  ) : (
-                    <div className="flex items-center gap-2">
-                      <Save className="w-4 h-4" />
-                      Salvar
-                    </div>
-                  )}
-                </button>
+                  Salvar
+                </Button>
               </div>
               {!category && (
-                <button
+                <Button
+                  variant="secondary"
                   type="button"
                   onClick={(e) => handleSubmit(e as any, true)}
-                  disabled={isLoading || !name.trim()}
-                  className="btn w-full bg-slate-600 hover:bg-slate-700 text-white font-medium rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  disabled={!name.trim()}
+                  isLoading={isLoading}
+                  icon={<Save className="w-4 h-4" />}
+                  className="w-full bg-slate-600 hover:bg-slate-700 text-white"
                 >
-                  {isLoading ? (
-                    <span className="loading loading-dots loading-md" />
-                  ) : (
-                    <div className="flex items-center gap-2">
-                      <Save className="w-4 h-4" />
-                      Salvar e Continuar Criando
-                    </div>
-                  )}
-                </button>
+                  Salvar e Continuar Criando
+                </Button>
               )}
             </div>
           </form>

@@ -1,5 +1,6 @@
 import { Trash2 } from "lucide-react"
 import type { CategoryModel } from "../types/category.model";
+import { Button } from '@/components/ui';
 
 interface ExcludeCategoryModalProps {
   categoryToDelete: CategoryModel | null;
@@ -30,18 +31,20 @@ export const ExcludeCategoryModal = ({
               Tem certeza que deseja excluir a categoria <span className="font-semibold">{categoryToDelete?.name}</span>? Esta ação não pode ser desfeita.
             </p>
             <div className="flex gap-3">
-              <button
+              <Button
+                variant="secondary"
                 onClick={handleCancelDelete}
-                className="flex-1 btn bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-lg"
+                className="flex-1"
               >
                 Cancelar
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="danger"
                 onClick={handleConfirmDelete}
-                className="flex-1 btn bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg"
+                className="flex-1"
               >
                 Excluir
-              </button>
+              </Button>
             </div>
           </div>
         </div>

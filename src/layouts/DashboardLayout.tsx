@@ -3,31 +3,50 @@ import { useLocation, Outlet, useNavigate, Link } from 'react-router-dom';
 import { Sidebar, Menu, MenuItem } from 'react-pro-sidebar';
 import { useAuth } from '../contexts/AuthContext';
 import { ExpiredSubscriptionModal } from '../components/ExpiredSubscriptionModal';
+import { SessionExpiryModal } from '@/features/auth/components/SessionExpiryModal';
 import {
   LayoutDashboard,
   Package,
   ArrowLeftRight,
   Users,
   LogOut,
-  Menu as MenuIcon,
   Tag,
   ChevronDown,
   CreditCard,
   Settings,
   User,
   ClipboardCheck,
+  FileSpreadsheet,
+  PanelLeftClose,
+  PanelRightClose,
 } from 'lucide-react';
 
 import QuoboIcon from '@/assets/quobo-icon.svg';
 
 import { useSubscriptionSocket } from '../hooks/useSubscriptionSocket';
 import { authService } from '@/features/auth/services/auth.service';
+import { Button } from '@/components/ui';
+import { useTimer } from '@/hooks/useTimer';
 
 export const DashboardLayout: React.FC = () => {
-  const { logout, user, account, expirationDays, isTrial, subscription, isSubscriptionExpired, updateSubscriptionStatus } = useAuth();
+  const {
+    logout,
+    user,
+    account,
+    expirationDays,
+    isTrial,
+    subscription,
+    isSubscriptionExpired,
+    isSubscriptionSuspended,
+    refreshToken,
+    isAdmin,
+    sessionExpiresAt
+  } = useAuth();
+
   const [collapsed, setCollapsed] = useState(false);
   const [toggled, setToggled] = useState(false);
   const [modalDismissed, setModalDismissed] = useState(false);
+  const [isChangingToken, setIsChangingToken] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -36,9 +55,9 @@ export const DashboardLayout: React.FC = () => {
 
   useEffect(() => {
     if (lastUpdate) {
-      updateSubscriptionStatus();
+      refreshToken();
     }
-  }, [lastUpdate, updateSubscriptionStatus]);
+  }, [lastUpdate, refreshToken]);
 
   const [isResending, setIsResending] = useState(false);
   const [resendSuccess, setResendSuccess] = useState(false);
@@ -69,16 +88,24 @@ export const DashboardLayout: React.FC = () => {
     { label: 'Movimentações', icon: ArrowLeftRight, path: '/movements' },
     { label: 'Categorias', icon: Tag, path: '/categories' },
     { label: 'Clientes', icon: Users, path: '/customers' },
+    ...(subscription?.plan?.features?.team_features?.enabled ? [{ label: 'Time', icon: User, path: '/team' }] : []),
     { label: 'Auditorias', icon: ClipboardCheck, path: '/audits' },
+    ...(subscription?.plan?.features?.import_features?.excel_import ? [{ label: 'Importação', icon: FileSpreadsheet, path: '/import' }] : []),
   ];
 
   const isActive = (path: string) => location.pathname === path;
 
+  // Allowed paths for delinquent users (suspended or expired)
+  const delinquentAllowedPaths = ['/checkout', '/account/finance', '/plans'];
+  const isOnAllowedPath = delinquentAllowedPaths.some(p => location.pathname.startsWith(p));
+
   useEffect(() => {
-    if (isSubscriptionExpired && location.pathname !== '/checkout') {
-      navigate('/checkout', { replace: true });
+    if (isSubscriptionExpired && !isOnAllowedPath) {
+      // Suspended users go to finance first, expired/trial go to checkout
+      const redirectPath = isSubscriptionSuspended ? '/account/finance' : '/checkout';
+      navigate(redirectPath, { replace: true });
     }
-  }, [isSubscriptionExpired, location.pathname, navigate]);
+  }, [isSubscriptionExpired, isSubscriptionSuspended, isOnAllowedPath, location.pathname, navigate]);
 
   useEffect(() => {
     if (isSubscriptionExpired) {
@@ -89,6 +116,61 @@ export const DashboardLayout: React.FC = () => {
 
   const handleModalDismiss = () => {
     setModalDismissed(true);
+  };
+
+  const togglePanelIcon = (isCollapsed: boolean) => {
+    return isCollapsed ? <PanelRightClose className="w-6 h-6" /> : <PanelLeftClose className="w-6 h-6" />;
+  };
+
+  const [showExpiryModal, setShowExpiryModal] = useState(false);
+  const fiveMin = 5 * 60; // 5 minutes in seconds
+
+  const { start, reset, pause, formatTime } = useTimer({
+    initialTime: fiveMin,
+    onTimeOver: () => {
+      // Time is up! User didn't interact.
+      logout();
+    }
+  });
+
+  useEffect(() => {
+    const checkExpiry = () => {
+      if (!sessionExpiresAt) return;
+
+      const now = new Date();
+      const timeDiff = sessionExpiresAt.getTime() - now.getTime();
+      const minutesLeft = timeDiff / (1000 * 60);
+
+      if (minutesLeft <= 5 && minutesLeft > 0) {
+        if (!showExpiryModal) {
+          setShowExpiryModal(true);
+          reset();
+          start();
+        }
+      } else if (minutesLeft <= 0) {
+        logout();
+      }
+    };
+
+    const interval = setInterval(checkExpiry, 30000); // Check every 30s
+    checkExpiry(); // Check immediately
+
+    return () => clearInterval(interval);
+  }, [sessionExpiresAt, showExpiryModal, start, reset]);
+
+  const handleContinueSession = async () => {
+    try {
+      setIsChangingToken(true);
+      await refreshToken();
+      setShowExpiryModal(false);
+      pause();
+      reset();
+    } catch (e) {
+      console.error("Failed to extend session", e);
+      logout();
+    } finally {
+      setIsChangingToken(false);
+    }
   };
 
   return (
@@ -130,14 +212,17 @@ export const DashboardLayout: React.FC = () => {
                   color: active ? 'rgb(3, 105, 161)' : 'rgb(71, 85, 105)',
                   fontWeight: active ? '600' : '500',
                   fontSize: '0.875rem',
-                  padding: '10px 20px',
-                  margin: '4px 12px',
+                  padding: collapsed || toggled ? '10px 0' : '10px 20px',
+                  margin: collapsed || toggled ? '4px 8px' : '4px 12px',
                   borderRadius: '8px',
                   transition: 'all 0.2s',
                   '&:hover': {
                     backgroundColor: active ? 'rgb(240, 249, 255)' : 'rgb(248, 250, 252)',
                     color: active ? 'rgb(3, 105, 161)' : 'rgb(15, 23, 42)',
                   },
+                }),
+                icon: () => ({
+                  ...(collapsed || toggled ? { width: '100%', minWidth: 'unset', justifyContent: 'center' } : {}),
                 }),
               }}
             >
@@ -147,16 +232,17 @@ export const DashboardLayout: React.FC = () => {
                   active={isActive(item.path)}
                   icon={
                     <item.icon
-                      className={`w-5 h-5 ${isActive(item.path) ? 'text-brand-600' : 'text-slate-400'}
+                      className={`w-5 h-5 m-auto ${isActive(item.path) ? 'text-brand-600' : 'text-slate-400'}
                         }`}
                     />
                   }
                   onClick={() => {
+                    if (isSubscriptionExpired) return;
                     navigate(item.path);
                     setToggled(false);
                   }}
                 >
-                  {item.label}
+                  {collapsed || toggled ? '' : item.label}
                 </MenuItem>
               ))}
             </Menu>
@@ -170,7 +256,8 @@ export const DashboardLayout: React.FC = () => {
                   color: 'rgb(71, 85, 105)',
                   fontWeight: '500',
                   fontSize: '0.875rem',
-                  padding: '10px 20px',
+                  padding: collapsed || toggled ? '10px 0' : '10px 20px',
+                  margin: collapsed || toggled ? '4px 8px' : '4px 12px',
                   borderRadius: '8px',
                   transition: 'all 0.2s',
                   '&:hover': {
@@ -178,13 +265,16 @@ export const DashboardLayout: React.FC = () => {
                     color: 'rgb(220, 38, 38)',
                   },
                 },
+                icon: {
+                  ...(collapsed || toggled ? { width: '100%', minWidth: 'unset', justifyContent: 'center' } : {}),
+                },
               }}
             >
               <MenuItem
-                icon={<LogOut className="w-5 h-5" />}
+                icon={<LogOut className="w-5 h-5 m-auto" />}
                 onClick={logout}
               >
-                Sair da conta
+                {collapsed || toggled ? '' : 'Sair da conta'}
               </MenuItem>
             </Menu>
           </div>
@@ -220,18 +310,20 @@ export const DashboardLayout: React.FC = () => {
         <header className="h-16 w-full bg-white border-b border-slate-200 flex items-center justify-between px-4 lg:px-8">
           {!isSubscriptionExpired ? (
             <>
-              <button
-                className="p-2 -ml-2 rounded-md text-slate-600 hover:bg-slate-100 transition-all duration-300 ease-in-out lg:hidden"
+              <Button
+                variant="back"
+                className="p-2 -ml-2 transition-all duration-300 ease-in-out lg:hidden"
                 onClick={() => setToggled(!toggled)}
               >
-                <MenuIcon className="w-6 h-6" />
-              </button>
-              <button
-                className="p-2 -ml-2 rounded-md text-slate-600 hover:bg-slate-100 transition-all duration-300 ease-in-out hidden lg:block"
+                {togglePanelIcon(toggled)}
+              </Button>
+              <Button
+                variant="back"
+                className="p-2 -ml-2 transition-all duration-300 ease-in-out hidden lg:block"
                 onClick={() => setCollapsed(!collapsed)}
               >
-                <MenuIcon className="w-6 h-6" />
-              </button>
+                {togglePanelIcon(collapsed)}
+              </Button>
             </>
           ) : (
             <div></div>
@@ -329,12 +421,15 @@ export const DashboardLayout: React.FC = () => {
                     Minha Conta
                   </Link>
                 </li>
-                <li>
-                  <Link to="/account/finance" className="flex items-center gap-2 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-brand-600">
-                    <CreditCard className="w-4 h-4" />
-                    Financeiro
-                  </Link>
-                </li>
+                {(isAdmin) && (
+                  <li>
+                    <Link to="/account/finance" className="flex items-center gap-2 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-brand-600">
+                      <CreditCard className="w-4 h-4" />
+                      Financeiro
+                    </Link>
+                  </li>
+                )}
+                {/* TODO: Implementar configurações */}
                 <li>
                   <Link to="/settings" className="flex items-center gap-2 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-brand-600">
                     <Settings className="w-4 h-4" />
@@ -359,14 +454,29 @@ export const DashboardLayout: React.FC = () => {
 
         {/* Scrollable Content Area */}
         <main className="flex-1 overflow-x-hidden overflow-y-auto bg-slate-50 p-4 lg:p-8">
-          <div className="max-w-7xl mx-auto">
+          <div className="mx-auto">
             <Outlet />
           </div>
         </main>
       </div>
 
-      {/* Expired Subscription Modal - shows until user clicks choose plan */}
-      {isSubscriptionExpired && !modalDismissed && <ExpiredSubscriptionModal isTrial={isTrial} onChoosePlan={handleModalDismiss} />}
+      {/* Expired/Suspended Subscription Modal */}
+      {/* For suspended users: modal shows on any page, dismissable to allow interaction with finance */}
+      {/* For expired/trial: modal shows and dismisses when user clicks choose plan */}
+      {isSubscriptionExpired && !modalDismissed && (
+        <ExpiredSubscriptionModal
+          isTrial={isTrial}
+          onChoosePlan={handleModalDismiss}
+        />
+      )}
+
+      <SessionExpiryModal
+        isOpen={showExpiryModal}
+        onContinue={handleContinueSession}
+        isChangingToken={isChangingToken}
+        onLogout={logout}
+        timeLeft={formatTime()}
+      />
     </div>
   );
 };

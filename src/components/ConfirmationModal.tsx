@@ -1,5 +1,6 @@
 import React from 'react';
 import { AlertCircle, AlertTriangle, Info, X } from 'lucide-react';
+import { Button } from '@/components/ui';
 
 export type ConfirmationType = 'danger' | 'warning' | 'info';
 
@@ -62,13 +63,13 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
     <div className="fixed inset-0 h-full w-full z-[9999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center animate-in zoom-in-95 duration-200 relative overflow-hidden">
         {/* Close Button */}
-        <button
+        <Button
+          variant='ghost'
+          icon={<X className="w-4 h-4 text-slate-500" />}
           onClick={onClose}
-          disabled={isLoading}
-          className="absolute right-4 top-4 btn btn-sm btn-circle btn-ghost hover:bg-slate-100"
-        >
-          <X className="w-4 h-4 text-slate-500" />
-        </button>
+          isLoading={isLoading}
+          className="absolute right-4 top-4 btn-circle"
+        />
 
         {/* Background Glow */}
         <div
@@ -90,20 +91,21 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
 
         {/* Actions */}
         <div className="flex gap-3">
-          <button
+          <Button
+            variant="secondary"
+            className="flex-1"
             onClick={onClose}
-            disabled={isLoading}
-            className="btn btn-ghost flex-1 text-slate-600 font-medium"
+            isLoading={isLoading}
           >
             {cancelText}
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={onConfirm}
-            disabled={isLoading}
-            className={`btn ${styles.confirmBtn} flex-1 font-semibold shadow-lg`}
+            className={`${styles.confirmBtn} flex-1`}
+            isLoading={isLoading}
           >
-            {isLoading ? <span className="loading loading-spinner loading-sm"></span> : confirmText}
-          </button>
+            {confirmText}
+          </Button>
         </div>
       </div>
 

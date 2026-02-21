@@ -1,14 +1,17 @@
 import React from 'react';
 import { Link, useLocation, Outlet } from 'react-router-dom';
 import { User, CreditCard, Settings } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 export const AccountLayout: React.FC = () => {
   const location = useLocation();
+  const { isAdmin } = useAuth();
   const currentPath = location.pathname;
 
   const tabs = [
     { label: 'Minha Conta', path: '/account/profile', icon: User },
-    { label: 'Financeiro', path: '/account/finance', icon: CreditCard },
+    // Finance tab only visible for admins
+    ...(isAdmin ? [{ label: 'Financeiro', path: '/account/finance', icon: CreditCard }] : []),
   ];
 
   return (

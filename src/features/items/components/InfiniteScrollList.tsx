@@ -6,6 +6,7 @@ import { ItemActionMenu } from './ItemActionMenu';
 import { ConfirmationModal } from '@/components/ConfirmationModal';
 import { useNavigate } from 'react-router-dom';
 import { item_service } from '../services/items.service';
+import { Loader } from '@/components/ui';
 
 interface InfiniteScrollListProps {
   items: ItemModel[];
@@ -80,7 +81,7 @@ export const InfiniteScrollList: React.FC<InfiniteScrollListProps> = ({
     return (
       <div className="flex justify-center items-center p-12">
         <div className="flex flex-col items-center gap-3">
-          <span className="loading loading-spinner loading-lg text-brand-600"></span>
+          <Loader size="lg" className="text-brand-600" />
           <p className="text-slate-500 text-sm font-medium">Buscando produtos...</p>
         </div>
       </div>
@@ -188,7 +189,7 @@ export const InfiniteScrollList: React.FC<InfiniteScrollListProps> = ({
         <div ref={observerTarget} className="h-10 flex items-center justify-center p-4">
           {loading && (
             <div className="flex items-center gap-2 text-slate-400 text-sm">
-              <div className="w-4 h-4 border-2 border-slate-400 border-t-transparent rounded-full animate-spin"></div>
+              <Loader size="sm" />
               Carregando mais itens...
             </div>
           )}

@@ -5,6 +5,7 @@ import type { CustomerModel } from "../types/customer.model";
 import { UtilsService } from "@/utils/utils_service";
 import { customer_service } from "../services/customer.service";
 import { AlertModal, type AlertType } from "@/components/AlertModal";
+import { Button } from '@/components/ui';
 
 export interface CustomerCardProps {
   customer: CustomerModel;
@@ -73,9 +74,13 @@ const CustomerCard: React.FC<CustomerCardProps> = ({ customer, onDelete }) => {
             </div>
           </div>
           <div className="dropdown dropdown-end">
-            <button tabIndex={0} className="btn btn-ghost rounded-full p-2.5 text-slate-400 hover:text-slate-600">
-              <MoreVertical className="w-5 h-5" />
-            </button>
+            <Button
+              tabIndex={0}
+              variant="ghost"
+              size='xs'
+              icon={<MoreVertical className="w-5 h-5" />}
+              className="border-none rounded-full p-2.5 text-slate-400 hover:text-slate-600"
+            />
             <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow-lg bg-white rounded-lg w-52 border border-slate-200">
               <li>
                 <button
@@ -84,7 +89,7 @@ const CustomerCard: React.FC<CustomerCardProps> = ({ customer, onDelete }) => {
                   className="text-red-600 hover:bg-red-50"
                 >
                   <Trash2 className="w-4 h-4" />
-                  {isDeleting ? 'Excluindo...' : 'Excluir cliente'}
+                  {isDeleting ? 'Inativando...' : 'Inativar cliente'}
                 </button>
               </li>
             </ul>
@@ -96,10 +101,12 @@ const CustomerCard: React.FC<CustomerCardProps> = ({ customer, onDelete }) => {
             <Mail className="w-4 h-4 text-slate-400" />
             <span>{customer.email}</span>
           </div>
-          <div className="flex items-center gap-3 text-sm text-slate-600">
-            <Phone className="w-4 h-4 text-slate-400" />
-            <span>{customer.phone}</span>
-          </div>
+          {customer.phone && (
+            <div className="flex items-center gap-3 text-sm text-slate-600">
+              <Phone className="w-4 h-4 text-slate-400" />
+              <span>{customer.phone}</span>
+            </div>
+          )}
           <div className="flex items-center gap-3 text-sm text-slate-600">
             <MapPin className="w-4 h-4 text-slate-400" />
             <span>{customer.address?.city}</span>
@@ -108,12 +115,13 @@ const CustomerCard: React.FC<CustomerCardProps> = ({ customer, onDelete }) => {
 
         <div className="mt-6 pt-4 border-t border-slate-100 flex justify-between items-center text-xs">
           <span className="text-slate-400">Cadastrado em {UtilsService.sanitizeDate(new Date(customer.created_at).toISOString())}</span>
-          <button
+          <Button
+            variant="ghost"
             onClick={() => navigate(`/customers/${customer.id}`)}
-            className="btn btn-ghost text-brand-600 font-medium"
+            className="border-none text-brand-600 font-medium"
           >
             Ver detalhes
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -126,18 +134,20 @@ const CustomerCard: React.FC<CustomerCardProps> = ({ customer, onDelete }) => {
               Tem certeza que deseja excluir <strong>{customer.name}</strong>? Esta ação irá desativar o cliente.
             </p>
             <div className="flex gap-3">
-              <button
+              <Button
+                variant="outline"
                 onClick={() => setShowConfirm(false)}
-                className="btn btn-outline flex-1"
+                className="flex-1"
               >
                 Cancelar
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="danger"
                 onClick={handleDelete}
-                className="btn bg-red-600 hover:bg-red-700 text-white flex-1"
+                className="flex-1"
               >
                 Excluir
-              </button>
+              </Button>
             </div>
           </div>
         </div>

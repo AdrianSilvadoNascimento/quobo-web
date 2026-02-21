@@ -77,10 +77,10 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, onEdit, onDelete }) => {
             </span>
           </div>
           <p className="text-[11px] text-slate-500 mt-0.5 font-medium">
-            <div className="flex items-center gap-1.5">
+            <span className="flex items-center gap-1.5">
               <Tag className="w-4 h-4" />
               {item.category?.name || 'Sem categoria'}
-            </div>
+            </span>
           </p>
         </div>
 

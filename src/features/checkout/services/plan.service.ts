@@ -22,6 +22,38 @@ export class PlanService {
       throw error;
     }
   }
+
+  async createPortalSession(returnUrl: string) {
+    try {
+      const { data } = await server.api.post<{ url: string }>('/checkout/portal-session', { returnUrl }, { withCredentials: true });
+      return data;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async createCheckoutSession(planId: string, successUrl: string, cancelUrl: string) {
+    try {
+      const { data } = await server.api.post<{ sessionId: string, sessionUrl: string }>('/checkout/create-session', { planId, successUrl, cancelUrl }, { withCredentials: true });
+      return data;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async verifyCheckoutSession(sessionId: string) {
+    try {
+      const { data } = await server.api.get<{
+        id: string;
+        status: string;
+        payment_status: string;
+        customer_email: string;
+      }>(`/checkout/session/${sessionId}`, { withCredentials: true });
+      return data;
+    } catch (error) {
+      throw error;
+    }
+  }
 }
 
 export const planService = new PlanService();

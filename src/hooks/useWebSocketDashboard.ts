@@ -105,30 +105,23 @@ export const useWebSocketDashboard = (accountId: string): UseWebSocketDashboardR
 
     // Fetch dashboard data via HTTP
     const fetchDashboard = async () => {
-      if (hasFetchedRef.current) {
-        console.log('⚠️ fetchDashboard: Já foi feito fetch, ignorando');
-        return;
-      }
+      if (hasFetchedRef.current) return;
 
-      console.log('🔄 fetchDashboard: Iniciando fetch para accountId:', accountId);
       try {
         setLoading(true);
         hasFetchedRef.current = true;
         // Usar o endpoint do domínio dashboard (sem parametro ID)
         const response = await server.api.get('/dashboard');
-        console.log('✅ fetchDashboard: Dados recebidos:', response.data);
         setData(response.data);
         setError(null);
       } catch (err: any) {
         console.error('❌ fetchDashboard: Erro ao buscar dados:', err);
         setError(err.response?.data?.message || 'Erro ao carregar dados do dashboard');
       } finally {
-        setLoading(false);
-        console.log('✅ fetchDashboard: Loading finalizado');
+        setLoading(false)
       }
     };
 
-    console.log('✅ useEffect: Criando conexão WebSocket');
     // Create socket connection (refresh token is in HTTP-only cookie, sent automatically)
     const socket = io(API_URL, {
       auth: {

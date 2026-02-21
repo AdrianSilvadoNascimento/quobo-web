@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { BarChart3, Calendar, Loader2, ChevronDown } from 'lucide-react';
+import { BarChart3, Calendar, ChevronDown } from 'lucide-react';
 import { StatisticsCharts } from '../components/StatisticsCharts';
 import { TopItemsChart } from '../components/TopItemsChart';
 import { movement_service } from '../services/movement.service';
+import { Button, Loader } from '@/components/ui';
 
 export const MovementsAnalyticsTab: React.FC = () => {
   const [stats, setStats] = useState<any>(null);
@@ -66,7 +67,7 @@ export const MovementsAnalyticsTab: React.FC = () => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+        <Loader size="lg" className="text-blue-600" />
       </div>
     );
   }
@@ -81,16 +82,17 @@ export const MovementsAnalyticsTab: React.FC = () => {
         </div>
 
         <div className="dropdown dropdown-start md:dropdown-end">
-          <button
+          <Button
             tabIndex={0}
-            className="btn btn-ghost btn-sm flex items-center gap-2"
+            variant="ghost"
+            size="sm"
+            icon={<Calendar className="w-4 h-4" />}
           >
-            <Calendar className="w-4 h-4" />
             <span className="text-slate-600">
               {periodLabels[period]}
             </span>
             <ChevronDown className="w-4 h-4 opacity-50" />
-          </button>
+          </Button>
           <ul
             tabIndex={0}
             className="dropdown-content menu p-2 shadow bg-white rounded-box w-52 z-50"

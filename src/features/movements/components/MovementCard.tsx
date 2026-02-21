@@ -125,9 +125,13 @@ export const MovementCard: React.FC<MovementCardProps> = ({ movement, onClick })
           {/* Usuário (Mobile Compacto / Desktop) */}
           <div className="flex items-center gap-2 sm:hidden md:flex">
             {movement.account_user?.avatar ? (
-              <img src={movement.account_user.avatar} alt="" className="w-6 h-6 rounded-full" />
+              <div className="avatar">
+                <div className="w-8 rounded-full border border-slate-100 shadow-md">
+                  <img src={movement.account_user.avatar} alt="" className="" />
+                </div>
+              </div>
             ) : (
-              <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center">
                 <User className="w-3 h-3 text-slate-400" />
               </div>
             )}

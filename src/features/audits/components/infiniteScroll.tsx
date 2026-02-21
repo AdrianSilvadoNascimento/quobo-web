@@ -113,7 +113,7 @@ export const InfiniteScrollList: React.FC<InfiniteScrollListProps> = ({
                 <tr key={audit.id} className="hover:bg-slate-50 transition-colors cursor-pointer" onClick={() => navigate(`/audits/${audit.id}`)}>
                   <td className="py-4">
                     <div className="font-medium text-slate-800">{audit.code}</div>
-                    <div className="text-xs text-slate-500">Criado por {audit.responsible_id}</div>
+                    <div className="text-xs text-slate-500">Criado por {audit.responsible?.name}</div>
                   </td>
                   <td className="py-4">
                     <div className="flex items-center gap-2">

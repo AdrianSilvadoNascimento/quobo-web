@@ -46,7 +46,17 @@ export interface ItemAuditModel {
   id: string;
   code: string;
   responsible_id: string;
+  responsible?: {
+    id: string;
+    name: string;
+    email: string;
+  };
   participants: string[];
+  participants_data?: {
+    id: string;
+    name: string;
+    email: string;
+  }[];
   status: AuditStockStatus;
   type: AuditStockType;
   items: AuditItem[];
@@ -66,6 +76,9 @@ export interface ItemAuditModel {
   completed_device_id?: string;
   completed_user_agent?: string;
   completed_platform?: string;
+
+  // Platform where audit was created
+  platform?: 'web' | 'mobile';
 
   created_at: string;
   updated_at: string;

@@ -4,6 +4,7 @@ import { Lock, Mail } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext';
 
 import QuoboIcon from '@/assets/quobo-icon.png';
+import { Button } from '@/components/ui';
 
 interface Particle {
   id: number;
@@ -16,7 +17,7 @@ interface Particle {
 }
 
 export const LoginPage: React.FC = () => {
-  const { login } = useAuth();
+  const { login, loginWithGoogle } = useAuth();
   const containerRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
@@ -99,6 +100,18 @@ export const LoginPage: React.FC = () => {
   const handleMouseLeave = () => {
     if (cardRef.current) {
       cardRef.current.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale(1)';
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      await loginWithGoogle();
+    } catch (err) {
+      setError('Falha no login com Google. Tente novamente.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -258,21 +271,29 @@ export const LoginPage: React.FC = () => {
               </div>
 
               {/* Submit Button */}
-              <button
+              <Button
+                variant='primary'
                 type="submit"
-                disabled={isLoading}
+                isLoading={isLoading}
                 className="cursor-pointer w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold py-3.5 rounded-md shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] active:scale-95 relative overflow-hidden group disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 <span className="relative z-10">
                   {isLoading ? <span className="loading loading-dots loading-md"></span> : 'Entrar'}
                 </span>
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-blue-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              </button>
+              </Button>
             </form>
-            {/* <div className="divider">ou</div> */}
+
+            <div className="divider">ou</div>
+
             {/* Google Sign In */}
-            {/* <button className="cursor-pointer w-full bg-white border-2 border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold py-3.5 rounded-md shadow-sm hover:shadow-md flex items-center justify-center gap-3 transition-all duration-300 transform hover:scale-[1.02] active:scale-95 group">
-              <svg className="w-5 h-5 transition-transform duration-300 group-hover:scale-110" viewBox="0 0 24 24">
+            <Button
+              variant='ghost'
+              type="button"
+              onClick={handleGoogleLogin}
+              isLoading={isLoading}
+              className="cursor-pointer w-full bg-white hover:bg-slate-50 text-slate-700 font-semibold py-3.5 rounded-md shadow-sm hover:shadow-md flex items-center justify-center gap-3 transition-all duration-300 transform hover:scale-[1.02] active:scale-95 group disabled:opacity-70 disabled:cursor-not-allowed"
+              icon={<svg className="w-5 h-5 transition-transform duration-300 group-hover:scale-110" viewBox="0 0 24 24">
                 <path
                   d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
                   fill="#4285F4"
@@ -289,9 +310,10 @@ export const LoginPage: React.FC = () => {
                   d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                   fill="#EA4335"
                 />
-              </svg>
-              <span>Continuar com Google</span>
-            </button> */}
+              </svg>}
+            >
+              Continuar com Google
+            </Button>
           </div>
         </div>
 

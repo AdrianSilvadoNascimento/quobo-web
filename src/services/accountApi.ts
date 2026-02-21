@@ -41,6 +41,9 @@ export interface FinanceData {
     status: string;
     created_at: Date;
     paid_at?: Date;
+    invoice_pdf?: string;
+    hosted_invoice_url?: string;
+    error_message?: string;
   }>;
 }
 
@@ -69,6 +72,10 @@ export const accountApi = {
   },
   getAccount: async (): Promise<any> => {
     const response = await server.api.get('/account');
+    return response.data;
+  },
+  retryInvoicePayment: async (invoiceId: string): Promise<{ success: boolean; message: string }> => {
+    const response = await server.api.post(`/checkout/retry-invoice/${invoiceId}`);
     return response.data;
   },
 };

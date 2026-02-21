@@ -146,7 +146,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, onLogout }) => {
 
         {/* Scrollable Content Area */}
         <main className="flex-1 overflow-x-hidden overflow-y-auto bg-slate-50 p-4 lg:p-8">
-          <div className="max-w-7xl mx-auto">
+          <div className="mx-auto">
             {children}
           </div>
         </main>

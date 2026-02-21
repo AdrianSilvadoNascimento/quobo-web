@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
+import { useEffect, useRef, useState, useMemo } from "react";
+import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -10,8 +10,10 @@ import { category_service } from "../services/category.service";
 import { InfiniteScrollList } from "../components/infiniteScrollList";
 import { CategoryModal } from "../components/CategoryModal";
 import { InfiniteCategoryCards } from "../components/InfiniteCards";
+import { Button } from '@/components/ui';
 
 export const CategoriesPage: React.FC = () => {
+  const queryClient = useQueryClient();
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<CategoryModel | null>(null);
@@ -26,20 +28,43 @@ export const CategoriesPage: React.FC = () => {
 
   const { account } = useAuth();
 
-  const fetchProducts = useCallback((page: number, limit: number) => {
-    return category_service.getPaginatedCategories(page, limit)
-  }, [])
-
   const {
-    data: categories,
-    loading,
-    hasMore,
-    loadMore,
-    refresh,
-  } = useInfiniteScroll<CategoryModel>({
-    fetchFunction: fetchProducts,
-    limit: 40,
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetching,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
+    queryKey: ['categories', 'infinite'],
+    queryFn: async ({ pageParam = 0 }) => {
+      return category_service.getPaginatedCategories(pageParam, 40);
+    },
+    getNextPageParam: (lastPage, _allPages) => {
+      if (lastPage.next) {
+        return _allPages.length;
+      }
+      return undefined;
+    },
+    initialPageParam: 0,
   });
+
+  // Combine all pages into a single array
+  const categories = useMemo(() => {
+    return data?.pages.flatMap(page => page.data) ?? [];
+  }, [data]);
+
+  const loading = isFetching && !isFetchingNextPage;
+  const hasMore = hasNextPage ?? false;
+
+  const loadMore = () => {
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  };
+
+  const refresh = () => {
+    queryClient.invalidateQueries({ queryKey: ['categories'] });
+  };
 
   const performSearch = async (term: string) => {
     if (!term.trim()) {
@@ -129,13 +154,13 @@ export const CategoriesPage: React.FC = () => {
           </div>
           <p className="text-slate-500 text-sm">Gerencie seu catálogo de categorias.</p>
         </div>
-        <button
+        <Button
           onClick={handleCreateCategory}
-          className="btn bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center gap-2 text-sm font-medium shadow-sm transition-all"
+          size="sm"
+          icon={<Plus className="w-4 h-4" />}
         >
-          <Plus className="w-4 h-4" />
           Nova Categoria
-        </button>
+        </Button>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-slate-100">

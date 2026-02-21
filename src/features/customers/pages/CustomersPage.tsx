@@ -1,14 +1,15 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { UserPlus, Search, Users, X, SlidersHorizontal, Filter, ChevronDown } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useNavigate } from 'react-router-dom';
+import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 
 import { customer_service } from '../services/customer.service';
 
 import { CustomerModel, type CustomerType } from '../types/customer.model';
-import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 import InfiniteCards from '../components/InfiniteCards';
+import { Button } from '@/components/ui';
 
 interface CustomerTypeProp {
   value: string;
@@ -17,6 +18,7 @@ interface CustomerTypeProp {
 
 export const CustomersPage: React.FC = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
   const [customerType, setCustomerType] = useState<CustomerTypeProp>({ value: '', label: 'Todos os Tipos' });
   const [searchResults, setSearchResults] = useState<CustomerModel[] | null>(null);
@@ -32,20 +34,43 @@ export const CustomersPage: React.FC = () => {
 
   const { account } = useAuth();
 
-  const fetchProducts = useCallback((page: number, limit: number) => {
-    return customer_service.getPaginatedCustomers(page, limit)
-  }, [])
-
   const {
-    data: customers,
-    loading,
-    hasMore,
-    loadMore,
-    refresh,
-  } = useInfiniteScroll<CustomerModel>({
-    fetchFunction: fetchProducts,
-    limit: 40,
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetching,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
+    queryKey: ['customers', 'infinite'],
+    queryFn: async ({ pageParam = 0 }) => {
+      return customer_service.getPaginatedCustomers(pageParam, 40);
+    },
+    getNextPageParam: (lastPage, _allPages) => {
+      if (lastPage.next) {
+        return _allPages.length;
+      }
+      return undefined;
+    },
+    initialPageParam: 0,
   });
+
+  // Combine all pages into a single array
+  const customers = useMemo(() => {
+    return data?.pages.flatMap(page => page.data) ?? [];
+  }, [data]);
+
+  const loading = isFetching && !isFetchingNextPage;
+  const hasMore = hasNextPage ?? false;
+
+  const loadMore = () => {
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  };
+
+  const refresh = () => {
+    queryClient.invalidateQueries({ queryKey: ['customers'] });
+  };
 
   const filteredCustomers = customerType.value
     ? customers.filter(c => c.type === customerType.value)
@@ -111,13 +136,13 @@ export const CustomersPage: React.FC = () => {
           </div>
           <p className="text-slate-500 text-sm">Gerencie sua base de clientes e parceiros.</p>
         </div>
-        <button
+        <Button
           onClick={() => navigate('/customers/new')}
-          className="btn bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium shadow-sm transition-all"
+          size="sm"
+          icon={<UserPlus className="w-4 h-4" />}
         >
-          <UserPlus className="w-4 h-4" />
           Novo Cliente
-        </button>
+        </Button>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-slate-100">
@@ -153,16 +178,17 @@ export const CustomersPage: React.FC = () => {
             )}
           </div>
           <div className="dropdown dropdown-end">
-            <button
+            <Button
               tabIndex={0}
-              className="btn btn-ghost btn-sm flex items-center gap-2"
+              variant="ghost"
+              size="sm"
+              icon={<Filter className="w-4 h-4" />}
             >
-              <Filter className="w-4 h-4" />
               <span className="text-slate-600">
                 {customerType.label}
               </span>
               <ChevronDown className="w-4 h-4 opacity-50" />
-            </button>
+            </Button>
             <ul
               tabIndex={0}
               className="dropdown-content menu p-2 shadow bg-white rounded-box w-52 z-50"
