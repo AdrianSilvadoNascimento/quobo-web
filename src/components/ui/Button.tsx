@@ -14,12 +14,12 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variantClasses: Record<ButtonVariant, string> = {
-  primary: 'bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-sm hover:shadow-md',
-  secondary: 'bg-slate-50 border border-slate-300 text-slate-700 hover:bg-slate-100 font-medium',
-  ghost: 'bg-transparent hover:bg-slate-100 text-slate-600',
-  outline: 'bg-transparent border border-slate-300 text-slate-700 hover:bg-slate-50',
-  danger: 'bg-red-600 hover:bg-red-700 text-white font-semibold',
-  back: 'bg-transparent border-none hover:bg-slate-100 text-slate-600 p-2 rounded-full',
+  primary: 'bg-[#2563EB] hover:bg-[#1E40AF] text-white font-semibold shadow-sm hover:shadow-md hover:translate-y-[-2px]',
+  secondary: 'bg-slate-50 border border-slate-300 text-slate-700 hover:bg-slate-100 font-medium hover:translate-y-[-2px]',
+  ghost: 'bg-transparent hover:bg-slate-100 text-slate-600 hover:translate-y-[-2px]',
+  outline: 'bg-transparent border border-slate-300 text-slate-700 hover:bg-slate-50 hover:translate-y-[-2px]',
+  danger: 'bg-red-600 hover:bg-red-700 text-white font-semibold hover:translate-y-[-2px]',
+  back: 'bg-transparent border-none hover:bg-slate-100 text-slate-600 p-2 rounded-full hover:translate-y-[-2px]',
 };
 
 const sizeClasses: Record<ButtonSize, string> = {

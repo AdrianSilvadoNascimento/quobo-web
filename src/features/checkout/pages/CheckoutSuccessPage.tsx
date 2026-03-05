@@ -22,13 +22,17 @@ export const CheckoutSuccessPage: React.FC = () => {
     customer_email: string;
   } | null>(null);
 
+  const hasVerified = React.useRef(false);
+
   useEffect(() => {
     const sessionId = searchParams.get('session_id');
 
-    if (!sessionId) {
-      setState('error');
+    if (!sessionId || hasVerified.current) {
+      if (!sessionId) setState('error');
       return;
     }
+
+    hasVerified.current = true;
 
     const verifySession = async () => {
       try {
@@ -54,7 +58,8 @@ export const CheckoutSuccessPage: React.FC = () => {
     };
 
     verifySession();
-  }, [searchParams, queryClient, refreshToken]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   const handleGoToDashboard = () => {
     navigate('/dashboard');
