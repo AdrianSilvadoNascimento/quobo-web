@@ -76,6 +76,13 @@ export const useRealtimeSocket = () => {
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     });
 
+    // Dashboard (push direto do backend com dados frescos)
+    socket.on('refreshDashboard', () => {
+      console.log('📊 refreshDashboard recebido via WebSocket');
+      // Invalida todas as queries de dashboard para que refetch traga dados frescos
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+    });
+
     // Customers
     socket.on('customers:change', (event: ChangeEvent) => {
       console.log('👥 customers:change recebido:', event);

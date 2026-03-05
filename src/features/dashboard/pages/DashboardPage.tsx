@@ -1,27 +1,26 @@
 import React, { useState } from 'react';
 import { TrendingUp, Package, AlertCircle, DollarSign, Activity, ChevronDown, Filter } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useWebSocketDashboard } from '../../../hooks/useWebSocketDashboard';
+import { useDashboard } from '../hooks/useDashboard';
+import type { DashboardPeriod } from '../hooks/useDashboard';
 import { DashboardSkeletons } from '../components/DashboardSkeletons';
 import { MovementFlowChart } from '../components/MovementFlowChart';
 import { TopMovedItemsCard } from '../components/TopMovedItemsCard';
 import { Button } from '@/components/ui';
 
-type Period = '7d' | '30d' | '1m';
+const periods = [
+  { value: '7d' as DashboardPeriod, label: 'Últimos 7 dias' },
+  { value: '30d' as DashboardPeriod, label: 'Últimos 30 dias' },
+  { value: '1m' as DashboardPeriod, label: 'Este mês' },
+];
 
 export const DashboardPage: React.FC = () => {
   const { account } = useAuth();
   const accountId = account?.id || '';
 
-  const periods = [
-    { value: '7d', label: 'Últimos 7 dias' },
-    { value: '30d', label: 'Últimos 30 dias' },
-    { value: '1m', label: 'Este mês' },
-  ];
-
   const [period, setPeriod] = useState(periods[0]);
 
-  const { data, loading, error, connected } = useWebSocketDashboard(accountId);
+  const { data, loading, error, connected } = useDashboard(accountId, period.value);
 
   // Show skeleton while loading
   if (loading || !data) {
@@ -53,7 +52,7 @@ export const DashboardPage: React.FC = () => {
     }).format(value);
   };
 
-  const handlePeriodChange = (p: Period) => {
+  const handlePeriodChange = (p: DashboardPeriod) => {
     if (document.activeElement instanceof HTMLElement) {
       document.activeElement.blur();
     }
@@ -97,7 +96,7 @@ export const DashboardPage: React.FC = () => {
           >
             {periods.map((p) => (
               <li key={p.value}>
-                <a onClick={() => handlePeriodChange(p.value as Period)}>
+                <a onClick={() => handlePeriodChange(p.value)}>
                   {p.label}
                 </a>
               </li>
@@ -170,12 +169,12 @@ export const DashboardPage: React.FC = () => {
         <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-100">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-xs font-semibold text-slate-400 uppercase">Movimentações (7d)</p>
+              <p className="text-xs font-semibold text-slate-400 uppercase">Movimentações ({period.value})</p>
               <h3 className="text-2xl font-bold text-slate-800 mt-1">
                 {data.sevenDayMovements?.toLocaleString('pt-BR') || 0}
               </h3>
               <div className="flex items-center mt-2 text-slate-500 text-xs font-medium">
-                <span>Últimos 7 dias</span>
+                <span>{period.label}</span>
               </div>
             </div>
             <div className="p-2 bg-purple-50 rounded-lg">
