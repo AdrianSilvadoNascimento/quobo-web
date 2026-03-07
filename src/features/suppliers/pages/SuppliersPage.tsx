@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Search, Building2, Loader2 } from 'lucide-react';
 import { supplier_service } from '../services/supplier.service';
-import { SupplierModel } from '../models/supplier.model';
+import type { SupplierModel } from '../models/supplier.model';
 import { SupplierCard } from '../components/SupplierCard';
 
 export const SuppliersPage: React.FC = () => {
@@ -10,7 +10,6 @@ export const SuppliersPage: React.FC = () => {
   const [suppliers, setSuppliers] = useState<SupplierModel[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [searching, setSearching] = useState(false);
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(false);
   const [total, setTotal] = useState(0);
@@ -41,14 +40,11 @@ export const SuppliersPage: React.FC = () => {
       return;
     }
     try {
-      setSearching(true);
       const results = await supplier_service.search(term.trim());
       setSuppliers(results);
       setHasMore(false);
     } catch (error) {
       console.error('Search error:', error);
-    } finally {
-      setSearching(false);
     }
   };
 

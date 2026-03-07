@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import { Download, Loader2, AlertCircle, QrCode } from 'lucide-react';
+import { Download, Loader2, AlertCircle } from 'lucide-react';
 import { item_service } from '../services/items.service';
 
 interface ProductQRCodeProps {
@@ -12,7 +12,7 @@ interface ProductQRCodeProps {
 
 export const ProductQRCode: React.FC<ProductQRCodeProps> = ({
   itemId,
-  itemName = 'produto',
+  itemName: _itemName = 'produto',
   size = 200,
   showDownload = true,
 }) => {

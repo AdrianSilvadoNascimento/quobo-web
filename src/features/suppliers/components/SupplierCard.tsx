@@ -1,6 +1,6 @@
 import React from 'react';
 import { Building2, Mail, Phone, Tag, ChevronRight } from 'lucide-react';
-import { SupplierModel } from '../models/supplier.model';
+import type { SupplierModel } from '../models/supplier.model';
 
 interface SupplierCardProps {
   supplier: SupplierModel;

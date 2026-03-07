@@ -1,5 +1,5 @@
 import { server } from '../../../services/api';
-import { SupplierModel, SupplierCategoryModel, CreateSupplierDto, UpdateSupplierDto } from '../models/supplier.model';
+import type { SupplierModel, SupplierCategoryModel, CreateSupplierDto, UpdateSupplierDto } from '../models/supplier.model';
 
 interface PaginatedResponse<T> {
   data: T[];
