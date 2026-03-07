@@ -1,5 +1,5 @@
 import { server } from '../../../services/api';
-import { UnitOfMeasureModel, CreateUnitOfMeasureDto } from '../types/unity_of_measure.model';
+import type { UnitOfMeasureModel, CreateUnitOfMeasureDto } from '../types/unity_of_measure.model';
 
 export class UnitOfMeasureService {
   async getUnits(): Promise<UnitOfMeasureModel[]> {
