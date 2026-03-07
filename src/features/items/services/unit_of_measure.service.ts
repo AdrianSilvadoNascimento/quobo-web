@@ -1,15 +1,30 @@
 import { server } from '../../../services/api';
-import { UnitOfMeasureModel } from '../types/unity_of_measure.model';
+import { UnitOfMeasureModel, CreateUnitOfMeasureDto } from '../types/unity_of_measure.model';
 
 export class UnitOfMeasureService {
   async getUnits(): Promise<UnitOfMeasureModel[]> {
-    try {
-      const response = await server.api.get(`/unit-of-measure`, { withCredentials: true });
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching units of measure:', error);
-      throw error;
-    }
+    const response = await server.api.get(`/unit-of-measure`, { withCredentials: true });
+    return response.data;
+  }
+
+  async getActiveUnits(): Promise<UnitOfMeasureModel[]> {
+    const response = await server.api.get(`/unit-of-measure/active`, { withCredentials: true });
+    return response.data;
+  }
+
+  async createCustomUnit(dto: CreateUnitOfMeasureDto): Promise<UnitOfMeasureModel> {
+    const response = await server.api.post(`/unit-of-measure`, dto, { withCredentials: true });
+    return response.data;
+  }
+
+  async updateUnit(id: string, dto: CreateUnitOfMeasureDto): Promise<UnitOfMeasureModel> {
+    const response = await server.api.put(`/unit-of-measure/${id}`, dto, { withCredentials: true });
+    return response.data;
+  }
+
+  async deleteUnit(id: string): Promise<UnitOfMeasureModel> {
+    const response = await server.api.delete(`/unit-of-measure/${id}`, { withCredentials: true });
+    return response.data;
   }
 }
 

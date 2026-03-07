@@ -27,6 +27,8 @@ import ResetPassword from '@/features/auth/pages/ResetPassword';
 import { AuthCallbackPage } from '@/features/auth/pages/AuthCallbackPage';
 import { ImportPage } from '@/features/import';
 import { FeatureGuard } from '@/components/FeatureGuard';
+import { SuppliersPage } from '@/features/suppliers/pages/SuppliersPage';
+import { SupplierFormPage } from '@/features/suppliers/pages/SupplierFormPage';
 
 /**
  * Redirects to login while saving the attempted path for route memory.
@@ -92,6 +94,11 @@ export const Router: React.FC = () => {
             <Route path="/audits" element={<AuditsPage />} />
             <Route path="/audits/new" element={<NewAuditPage />} />
             <Route path="/audits/:id" element={<AuditDetailsPage />} />
+
+            {/* Supplier Routes */}
+            <Route path="/suppliers" element={<SuppliersPage />} />
+            <Route path="/suppliers/new" element={<SupplierFormPage />} />
+            <Route path="/suppliers/:id" element={<SupplierFormPage />} />
 
             {/* Import Route */}
             <Route path="/import" element={

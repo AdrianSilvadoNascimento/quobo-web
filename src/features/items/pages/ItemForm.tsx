@@ -65,7 +65,7 @@ export const ItemForm: React.FC = () => {
     sale_price: '', // Venda
     quantity: '',
     min_stock: '5',
-    unit_of_measure: 'UNIDADE', // Default fallback
+    unit_of_measure: '', // será preenchido ao carregar as unidades
     active: true
   });
 
@@ -444,15 +444,29 @@ export const ItemForm: React.FC = () => {
                     </label>
                   </div>
                   <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-full max-h-60 overflow-y-auto">
-                    {units.map(unit => (
-                      <li key={unit.name}>
+                    {units.filter(u => u.is_global).length > 0 && (
+                      <li className="menu-title"><span className="text-xs text-slate-400 uppercase">Padrão</span></li>
+                    )}
+                    {units.filter(u => u.is_global).map(unit => (
+                      <li key={unit.id}>
                         <a onClick={() => {
                           setFormData(prev => ({ ...prev, unit_of_measure: unit.name }));
-                          if (document.activeElement instanceof HTMLElement) {
-                            document.activeElement.blur();
-                          }
+                          if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
                         }}>
-                          {unit.name}
+                          {unit.name}{unit.abbreviation ? ` (${unit.abbreviation})` : ''}
+                        </a>
+                      </li>
+                    ))}
+                    {units.filter(u => !u.is_global).length > 0 && (
+                      <li className="menu-title"><span className="text-xs text-slate-400 uppercase">Personalizada</span></li>
+                    )}
+                    {units.filter(u => !u.is_global).map(unit => (
+                      <li key={unit.id}>
+                        <a onClick={() => {
+                          setFormData(prev => ({ ...prev, unit_of_measure: unit.name }));
+                          if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+                        }}>
+                          {unit.name}{unit.abbreviation ? ` (${unit.abbreviation})` : ''}
                         </a>
                       </li>
                     ))}
