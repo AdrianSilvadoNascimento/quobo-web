@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Building2, Loader2, Save, Trash2 } from 'lucide-react';
 import { supplier_service } from '../services/supplier.service';
-import { CreateSupplierDto, SupplierCategoryModel } from '../models/supplier.model';
+import type { CreateSupplierDto, SupplierCategoryModel } from '../models/supplier.model';
 
 const emptyForm: CreateSupplierDto = {
   name: '',
