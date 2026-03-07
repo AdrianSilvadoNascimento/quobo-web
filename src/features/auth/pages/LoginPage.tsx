@@ -25,7 +25,6 @@ export const LoginPage: React.FC = () => {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -120,7 +119,7 @@ export const LoginPage: React.FC = () => {
     setIsLoading(true);
     setError(null);
     try {
-      await login({ email, password, remember: rememberMe });
+      await login({ email, password });
     } catch (err) {
       setError('Falha no login. Verifique suas credenciais.');
     } finally {
@@ -251,17 +250,8 @@ export const LoginPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Remember Me & Forgot Password */}
-              <div className="flex items-center justify-between text-sm pt-1">
-                <label className="flex items-center text-slate-600 cursor-pointer hover:text-slate-800 transition-colors">
-                  <input
-                    type="checkbox"
-                    className="checkbox checkbox-primary w-5 h-5 mr-2"
-                    checked={rememberMe}
-                    onChange={(e) => setRememberMe(e.target.checked)}
-                  />
-                  Lembrar de mim
-                </label>
+              {/* Forgot Password */}
+              <div className="flex items-center justify-end text-sm pt-1">
                 <Link
                   to="/forgot-password"
                   className="text-blue-500 hover:text-blue-700 font-medium hover:underline transition-all"

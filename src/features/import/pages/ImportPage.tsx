@@ -11,6 +11,7 @@ import {
   FolderTree,
   Users,
   Layers,
+  Building2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -46,6 +47,12 @@ const IMPORT_TYPE_OPTIONS: { value: ImportType; label: string; description: stri
     label: 'Clientes',
     description: 'Importar somente clientes',
     icon: <Users className="w-4 h-4" />,
+  },
+  {
+    value: 'suppliers',
+    label: 'Fornecedores',
+    description: 'Importar lista de fornecedores',
+    icon: <Building2 className="w-4 h-4" />,
   },
 ];
 

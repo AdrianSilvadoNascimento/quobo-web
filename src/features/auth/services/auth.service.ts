@@ -50,45 +50,19 @@ export class AuthService {
     this.delinquencyDetected = false;
   }
 
-  async login(params: { email: string; password: string; remember?: boolean }) {
+  /**
+   * Handshake: send Supabase access token to backend, receive backend session
+   */
+  async handshake(supabaseAccessToken: string) {
     try {
-      const { email, password, remember } = params;
       const { data } = await server.api.post<LoginResponseEntity>(
-        '/auth/login',
+        '/auth/handshake',
         {
-          email,
-          password,
-          remember,
-          platform: 'web' // Explicitly set platform for web client
+          supabase_access_token: supabaseAccessToken,
+          platform: 'web'
         },
         { withCredentials: true }
       );
-      return data;
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  async loginWithGoogle(idToken: string, displayName?: string, photoURL?: string) {
-    try {
-      const { data } = await server.api.post<LoginResponseEntity>(
-        '/auth/google',
-        {
-          idToken,
-          displayName,
-          photoURL
-        },
-        { withCredentials: true }
-      );
-      return data;
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  async register(params: any) {
-    try {
-      const { data } = await server.api.post('/auth/register', params);
       return data;
     } catch (error) {
       throw error;
@@ -102,49 +76,6 @@ export class AuthService {
     } catch (error) {
       console.error('Logout failed', error);
       this.setAccessToken(null);
-    }
-  }
-
-  async forgotPassword(email: string) {
-    try {
-      const { data } = await server.api.post('/auth/forgot-password', { email });
-      return data;
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  async resendToken(email: string) {
-    try {
-      const { data } = await server.api.post('/auth/resend-token', { email });
-      return data;
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  async resendVerificationEmail(email: string) {
-    try {
-      const { data } = await server.api.post('/auth/resend-verification-email', { email });
-      return data;
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  async resetPassword(params: { email: string; token: string; password: string; passwordConfirmation: string }) {
-    try {
-      const args = {
-        email: params.email,
-        code: params.token,
-        newPassword: params.password,
-        confirmPassword: params.passwordConfirmation
-      };
-      const { data } = await server.api.post('/auth/reset-password', args);
-      debugger
-      return data;
-    } catch (error) {
-      throw error;
     }
   }
 

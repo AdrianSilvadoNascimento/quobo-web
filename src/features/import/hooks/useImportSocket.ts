@@ -6,7 +6,7 @@ const POLL_INTERVAL_MS = 500;   // poll every 500ms while job is active
 const POLL_MAX_DURATION = 300000; // stop after 5 minutes max
 
 export type ImportJobStatus = 'queued' | 'processing' | 'completed' | 'failed' | 'cancelled';
-export type ImportType = 'full' | 'items' | 'categories' | 'customers';
+export type ImportType = 'full' | 'items' | 'categories' | 'customers' | 'suppliers';
 
 export interface ImportError {
   row: number;

@@ -90,6 +90,11 @@ export class ItemService {
       throw error;
     }
   }
+
+  async getQRCodeData(itemId: string): Promise<{ qrCodeData: string; type: 'barcode' | 'generated' }> {
+    const response = await server.api.get(`/item/${itemId}/qrcode-data`, { withCredentials: true });
+    return response.data;
+  }
 }
 
 export const item_service = new ItemService();

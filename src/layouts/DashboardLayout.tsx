@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, Outlet, useNavigate, Link } from 'react-router-dom';
-import { Sidebar, Menu, MenuItem } from 'react-pro-sidebar';
 import { useAuth } from '../contexts/AuthContext';
 import { ExpiredSubscriptionModal } from '../components/ExpiredSubscriptionModal';
 import { SessionExpiryModal } from '@/features/auth/components/SessionExpiryModal';
@@ -18,15 +17,15 @@ import {
   ClipboardCheck,
   FileSpreadsheet,
   PanelLeftClose,
-  PanelRightClose,
 } from 'lucide-react';
 
 import QuoboIcon from '@/assets/quobo-icon.svg';
 
 import { useSubscriptionSocket } from '../hooks/useSubscriptionSocket';
-import { authService } from '@/features/auth/services/auth.service';
-import { Button } from '@/components/ui';
+import { supabase } from '@/config/supabase';
 import { useTimer } from '@/hooks/useTimer';
+
+const DRAWER_ID = 'quobo-sidebar-drawer';
 
 export const DashboardLayout: React.FC = () => {
   const {
@@ -43,8 +42,6 @@ export const DashboardLayout: React.FC = () => {
     sessionExpiresAt
   } = useAuth();
 
-  const [collapsed, setCollapsed] = useState(false);
-  const [toggled, setToggled] = useState(false);
   const [modalDismissed, setModalDismissed] = useState(false);
   const [isChangingToken, setIsChangingToken] = useState(false);
   const location = useLocation();
@@ -67,16 +64,18 @@ export const DashboardLayout: React.FC = () => {
 
     try {
       setIsResending(true);
-      await authService.resendVerificationEmail(user.email);
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: user.email,
+      });
+      if (error) throw error;
       setResendSuccess(true);
 
-      // Reset success message after 5 seconds to allow resending again if needed
       setTimeout(() => {
         setResendSuccess(false);
       }, 5000);
     } catch (error) {
       console.error('Failed to resend verification email', error);
-      // Ideally show a toast error here
     } finally {
       setIsResending(false);
     }
@@ -101,34 +100,32 @@ export const DashboardLayout: React.FC = () => {
 
   useEffect(() => {
     if (isSubscriptionExpired && !isOnAllowedPath) {
-      // Suspended users go to finance first, expired/trial go to checkout
       const redirectPath = isSubscriptionSuspended ? '/account/finance' : '/checkout';
       navigate(redirectPath, { replace: true });
     }
   }, [isSubscriptionExpired, isSubscriptionSuspended, isOnAllowedPath, location.pathname, navigate]);
 
-  useEffect(() => {
-    if (isSubscriptionExpired) {
-      setCollapsed(true);
-      setToggled(false);
-    }
-  }, [isSubscriptionExpired]);
-
   const handleModalDismiss = () => {
     setModalDismissed(true);
   };
 
-  const togglePanelIcon = (isCollapsed: boolean) => {
-    return isCollapsed ? <PanelRightClose className="w-6 h-6" /> : <PanelLeftClose className="w-6 h-6" />;
+  // Close mobile drawer when navigating
+  const handleNavClick = (path: string) => {
+    if (isSubscriptionExpired) return;
+    navigate(path);
+    // Uncheck the drawer toggle to close it on mobile
+    const toggle = document.getElementById(DRAWER_ID) as HTMLInputElement;
+    if (toggle) toggle.checked = false;
   };
 
+  // ─── Session Expiry Timer ───
+
   const [showExpiryModal, setShowExpiryModal] = useState(false);
-  const fiveMin = 5 * 60; // 5 minutes in seconds
+  const fiveMin = 5 * 60;
 
   const { start, reset, pause, formatTime } = useTimer({
     initialTime: fiveMin,
     onTimeOver: () => {
-      // Time is up! User didn't interact.
       logout();
     }
   });
@@ -152,8 +149,8 @@ export const DashboardLayout: React.FC = () => {
       }
     };
 
-    const interval = setInterval(checkExpiry, 30000); // Check every 30s
-    checkExpiry(); // Check immediately
+    const interval = setInterval(checkExpiry, 30000);
+    checkExpiry();
 
     return () => clearInterval(interval);
   }, [sessionExpiresAt, showExpiryModal, start, reset]);
@@ -174,115 +171,11 @@ export const DashboardLayout: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen bg-slate-50 text-slate-800 font-sans overflow-hidden">
-      {/* Sidebar */}
-      <Sidebar
-        collapsed={collapsed}
-        toggled={toggled}
-        onBackdropClick={() => setToggled(false)}
-        breakPoint="lg"
-        backgroundColor="#ffffff"
-        rootStyles={{
-          border: 'none',
-          borderRight: '1px solid rgb(226, 232, 240)',
-        }}
-      >
-        <div className="flex flex-col h-full">
-          {/* Logo Section */}
-          <div className="flex items-center justify-center h-16 border-b border-slate-100 px-6">
-            <div className="flex items-center gap-2 font-bold text-2xl text-brand-700">
-              <div className="flex items-center justify-center border-2 border-white shadow-md w-12 h-12 rounded-full bg-gradient-to-br from-[#22B8E6] via-[#2563EB] to-[#1E40AF]">
-                <img src={QuoboIcon} alt="Quobo Logo" className="w-10 h-auto" />
-              </div>
-              {!collapsed && <span className="text-transparent bg-clip-text bg-gradient-to-br from-[#22B8E6] via-[#2563EB] to-[#1E40AF]">Quobo</span>}
-            </div>
-          </div>
+    <div className="drawer lg:drawer-open h-screen">
+      <input id={DRAWER_ID} type="checkbox" className="drawer-toggle" />
 
-          {/* Menu Items */}
-          <div className="flex-1 overflow-y-auto py-6">
-            {!collapsed && (
-              <div className="px-6 mb-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                Menu Principal
-              </div>
-            )}
-            <Menu
-              menuItemStyles={{
-                button: ({ active }) => ({
-                  backgroundColor: active ? 'rgb(240, 249, 255)' : 'transparent',
-                  color: active ? 'rgb(3, 105, 161)' : 'rgb(71, 85, 105)',
-                  fontWeight: active ? '600' : '500',
-                  fontSize: '0.875rem',
-                  padding: collapsed || toggled ? '10px 0' : '10px 20px',
-                  margin: collapsed || toggled ? '4px 8px' : '4px 12px',
-                  borderRadius: '8px',
-                  transition: 'all 0.2s',
-                  '&:hover': {
-                    backgroundColor: active ? 'rgb(240, 249, 255)' : 'rgb(248, 250, 252)',
-                    color: active ? 'rgb(3, 105, 161)' : 'rgb(15, 23, 42)',
-                  },
-                }),
-                icon: () => ({
-                  ...(collapsed || toggled ? { width: '100%', minWidth: 'unset', justifyContent: 'center' } : {}),
-                }),
-              }}
-            >
-              {navItems.map((item) => (
-                <MenuItem
-                  key={item.path}
-                  active={isActive(item.path)}
-                  icon={
-                    <item.icon
-                      className={`w-5 h-5 m-auto ${isActive(item.path) ? 'text-brand-600' : 'text-slate-400'}
-                        }`}
-                    />
-                  }
-                  onClick={() => {
-                    if (isSubscriptionExpired) return;
-                    navigate(item.path);
-                    setToggled(false);
-                  }}
-                >
-                  {collapsed || toggled ? '' : item.label}
-                </MenuItem>
-              ))}
-            </Menu>
-          </div>
-
-          {/* Logout Button */}
-          <div className="p-4 border-t border-slate-100">
-            <Menu
-              menuItemStyles={{
-                button: {
-                  color: 'rgb(71, 85, 105)',
-                  fontWeight: '500',
-                  fontSize: '0.875rem',
-                  padding: collapsed || toggled ? '10px 0' : '10px 20px',
-                  margin: collapsed || toggled ? '4px 8px' : '4px 12px',
-                  borderRadius: '8px',
-                  transition: 'all 0.2s',
-                  '&:hover': {
-                    backgroundColor: 'rgb(254, 242, 242)',
-                    color: 'rgb(220, 38, 38)',
-                  },
-                },
-                icon: {
-                  ...(collapsed || toggled ? { width: '100%', minWidth: 'unset', justifyContent: 'center' } : {}),
-                },
-              }}
-            >
-              <MenuItem
-                icon={<LogOut className="w-5 h-5 m-auto" />}
-                onClick={logout}
-              >
-                {collapsed || toggled ? '' : 'Sair da conta'}
-              </MenuItem>
-            </Menu>
-          </div>
-        </div>
-      </Sidebar>
-
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col h-screen overflow-hidden">
+      {/* ═══ Main Content (drawer-content) ═══ */}
+      <div className="drawer-content flex flex-col h-screen overflow-hidden">
         {/* Verification Banner */}
         {user && !user.email_verified && (
           <div className="bg-amber-50 border-b border-amber-100 px-4 py-3 flex flex-col sm:flex-row items-start sm:items-center justify-between text-sm transition-all duration-300 gap-2 sm:gap-4">
@@ -306,29 +199,18 @@ export const DashboardLayout: React.FC = () => {
           </div>
         )}
 
-        {/* Topbar */}
-        <header className="h-16 w-full bg-white border-b border-slate-200 flex items-center justify-between px-4 lg:px-8">
-          {!isSubscriptionExpired ? (
-            <>
-              <Button
-                variant="back"
-                className="p-2 -ml-2 transition-all duration-300 ease-in-out lg:hidden"
-                onClick={() => setToggled(!toggled)}
-              >
-                {togglePanelIcon(toggled)}
-              </Button>
-              <Button
-                variant="back"
-                className="p-2 -ml-2 transition-all duration-300 ease-in-out hidden lg:block"
-                onClick={() => setCollapsed(!collapsed)}
-              >
-                {togglePanelIcon(collapsed)}
-              </Button>
-            </>
-          ) : (
-            <div></div>
-          )}
+        {/* Topbar / Navbar */}
+        <header className="navbar h-16 w-full bg-white border-b border-slate-200 px-2 lg:px-8 min-h-0 shrink-0">
+          <div className="flex-none">
+            {/* Toggle button — visible on all screens */}
+            <label htmlFor={DRAWER_ID} aria-label="toggle sidebar" className="btn btn-square btn-ghost">
+              <PanelLeftClose className="w-5 h-5 text-slate-500" />
+            </label>
+          </div>
 
+          <div className="flex-1" />
+
+          {/* Right side of topbar */}
           <div className="flex items-center gap-4">
             {isTrial && (
               <>
@@ -368,12 +250,7 @@ export const DashboardLayout: React.FC = () => {
 
             <div className="h-8 w-[1px] bg-slate-200 mx-2 hidden sm:block"></div>
 
-            {/* <button className="p-2 rounded-full hover:bg-slate-100 text-slate-500 relative">
-              <Bell className="w-5 h-5" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
-            </button> */}
-
-            {/* User Dropdown - DaisyUI */}
+            {/* User Dropdown */}
             <div className="dropdown dropdown-end">
               <div
                 tabIndex={0}
@@ -406,7 +283,6 @@ export const DashboardLayout: React.FC = () => {
                 tabIndex={0}
                 className="dropdown-content menu bg-white rounded-xl shadow-lg border border-slate-100 w-52 p-0 mt-3 z-50"
               >
-                {/* User Info Header */}
                 <li className="menu-title px-4 py-3 border-b border-slate-50">
                   <div>
                     <p className="text-sm font-semibold text-slate-800 truncate">{user?.name}</p>
@@ -414,7 +290,6 @@ export const DashboardLayout: React.FC = () => {
                   </div>
                 </li>
 
-                {/* Menu Items */}
                 <li>
                   <Link to="/account/profile" className="flex items-center gap-2 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-brand-600">
                     <User className="w-4 h-4" />
@@ -429,7 +304,6 @@ export const DashboardLayout: React.FC = () => {
                     </Link>
                   </li>
                 )}
-                {/* TODO: Implementar configurações */}
                 <li>
                   <Link to="/settings" className="flex items-center gap-2 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-brand-600">
                     <Settings className="w-4 h-4" />
@@ -437,7 +311,6 @@ export const DashboardLayout: React.FC = () => {
                   </Link>
                 </li>
 
-                {/* Logout - Separated */}
                 <li className="border-t border-slate-50">
                   <button
                     onClick={logout}
@@ -460,9 +333,68 @@ export const DashboardLayout: React.FC = () => {
         </main>
       </div>
 
-      {/* Expired/Suspended Subscription Modal */}
-      {/* For suspended users: modal shows on any page, dismissable to allow interaction with finance */}
-      {/* For expired/trial: modal shows and dismisses when user clicks choose plan */}
+      {/* ═══ Drawer Sidebar ═══ */}
+      <div className="drawer-side is-drawer-close:overflow-visible z-40">
+        <label htmlFor={DRAWER_ID} aria-label="close sidebar" className="drawer-overlay"></label>
+
+        <div className="flex min-h-full flex-col bg-white border-r border-slate-200 is-drawer-close:w-[4.5rem] is-drawer-open:w-64 transition-all duration-300">
+          {/* Logo Section */}
+          <div className="flex items-center is-drawer-close:justify-center h-16 border-b border-slate-100 px-4 is-drawer-open:px-6 shrink-0">
+            <div className="flex items-center gap-2 font-bold text-2xl text-brand-700 is-drawer-close:gap-0">
+              <div className="flex items-center justify-center border-2 border-white shadow-md w-10 h-10 rounded-full bg-gradient-to-br from-[#22B8E6] via-[#2563EB] to-[#1E40AF] shrink-0">
+                <img src={QuoboIcon} alt="Quobo Logo" className="w-8 h-auto" />
+              </div>
+              <span className="is-drawer-close:hidden text-transparent bg-clip-text bg-gradient-to-br from-[#22B8E6] via-[#2563EB] to-[#1E40AF]">
+                Quobo
+              </span>
+            </div>
+          </div>
+
+          {/* Menu Label */}
+          <div className="is-drawer-close:hidden px-6 mt-6 mb-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">
+            Menu Principal
+          </div>
+
+          {/* Navigation Items */}
+          <ul className="menu w-full grow px-2 gap-0.5">
+            {navItems.map((item) => (
+              <li key={item.path}>
+                <button
+                  onClick={() => handleNavClick(item.path)}
+                  className={`is-drawer-close:tooltip is-drawer-close:tooltip-right is-drawer-close:justify-center flex items-center gap-3 rounded-lg transition-all duration-200 ${isActive(item.path)
+                    ? 'bg-sky-50 text-sky-700 font-semibold'
+                    : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900 font-medium'
+                    }`}
+                  data-tip={item.label}
+                >
+                  <item.icon
+                    className={`w-5 h-5 shrink-0 ${isActive(item.path) ? 'text-sky-600' : 'text-slate-400'}`}
+                  />
+                  <span className="is-drawer-close:hidden text-sm">{item.label}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+
+          {/* Logout Button */}
+          <div className="border-t border-slate-100 p-2">
+            <ul className="menu w-full">
+              <li>
+                <button
+                  onClick={logout}
+                  className="is-drawer-close:tooltip is-drawer-close:tooltip-right is-drawer-close:justify-center flex items-center gap-3 text-slate-500 hover:bg-red-50 hover:text-red-600 rounded-lg transition-all duration-200"
+                  data-tip="Sair da conta"
+                >
+                  <LogOut className="w-5 h-5 shrink-0" />
+                  <span className="is-drawer-close:hidden text-sm font-medium">Sair da conta</span>
+                </button>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      {/* ═══ Modals ═══ */}
       {isSubscriptionExpired && !modalDismissed && (
         <ExpiredSubscriptionModal
           isTrial={isTrial}

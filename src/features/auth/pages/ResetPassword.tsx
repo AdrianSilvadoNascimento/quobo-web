@@ -2,11 +2,10 @@ import type React from "react";
 import { useEffect, useRef, useState } from "react";
 
 import QuoboIcon from "@/assets/quobo-icon.png";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { authService } from "../services/auth.service";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/config/supabase";
 import { AlertModal, type AlertType } from "@/components/AlertModal";
-import { ArrowRight, CheckCircle, Eye, EyeOff, KeyRound, RefreshCw } from "lucide-react";
-import { useCountdown } from "@/hooks/useCountdown";
+import { ArrowRight, CheckCircle, Eye, EyeOff } from "lucide-react";
 
 interface Particle {
   id: number;
@@ -20,28 +19,20 @@ interface Particle {
 
 const ResetPassword: React.FC = () => {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const email = searchParams.get('email');
-
-  const [step, setSteps] = useState<'CODE' | 'PASSWORD' | 'SUCCESS'>('CODE');
 
   const [password, setPassword] = useState('');
   const [passwordConfirmation, setPasswordConfirmation] = useState('');
-  const [token, setToken] = useState('');
 
   const containerRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [particles, setParticles] = useState<Particle[]>([]);
 
-  const { isActive, formattedTime, restart } = useCountdown(60, { autoStart: false, storageKey: 'reset_password_resend_timer' });
-
   const [showPassword, setShowPassword] = useState(false);
   const [showPasswordConfirmation, setShowPasswordConfirmation] = useState(false);
 
-  const [isCheckingToken, setIsCheckingToken] = useState(false);
-  const [isResending, setIsResending] = useState(false);
   const [isSavingPassword, setIsSavingPassword] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
 
   const [alertModal, setAlertModal] = useState({
     isOpen: false,
@@ -93,76 +84,41 @@ const ResetPassword: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const handleCheckToken = () => {
-    if (!email || !token || token.length !== 6) return;
-
-    setIsCheckingToken(true);
-
-    setTimeout(() => {
-      setIsCheckingToken(false);
-      setSteps('PASSWORD');
-    }, 1500)
-  }
-
-  const handleResendCode = async () => {
-    if (isActive || !email) return;
-
-    setIsResending(true);
-
-    try {
-      await authService.resendToken(email);
-      restart();
-    } catch (error) {
-      setAlertModal({
-        isOpen: true,
-        title: 'Erro',
-        message: 'Erro ao reenviar código',
-        type: 'error'
-      });
-    } finally {
-      setIsResending(false);
-    }
-  }
-
   const handleSavePassword = async () => {
     if (
-      !email ||
-      !token ||
-      token.length !== 6 ||
       password.length < 8 ||
-      passwordConfirmation.length < 8
+      passwordConfirmation.length < 8 ||
+      password !== passwordConfirmation
     ) return;
-
-    if (password !== passwordConfirmation) return;
 
     setIsSavingPassword(true);
 
     try {
-      await authService.resetPassword({ email, token, password, passwordConfirmation });
-      debugger
-      setSteps('SUCCESS');
+      const { error } = await supabase.auth.updateUser({ password });
+
+      if (error) {
+        throw error;
+      }
+
+      setIsSuccess(true);
       setAlertModal({
         isOpen: true,
         title: 'Sucesso',
-        message: 'Senha salva com sucesso',
+        message: 'Senha redefinida com sucesso!',
         type: 'success'
       });
 
       setTimeout(() => {
         navigate('/login');
-      }, 5000);
+      }, 3000);
     } catch (error: any) {
-      console.error(error)
+      console.error(error);
       setAlertModal({
         isOpen: true,
         title: 'Erro',
-        message: error.response?.data?.message || 'Erro ao salvar senha',
+        message: error.message || 'Erro ao redefinir senha. O link pode ter expirado.',
         type: 'error'
       });
-
-      if (error.response.data.message === 'Código inválido ou expirado') {
-        setSteps('CODE');
-      }
     } finally {
       setIsSavingPassword(false);
     }
@@ -275,68 +231,11 @@ const ResetPassword: React.FC = () => {
               boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3), 0 0 100px rgba(255, 255, 255, 0.1) inset',
             }}
           >
-            {/* --- STEP 1: CODE VERIFICATION --- */}
-            {step === 'CODE' && (
-              <div className="animate-in fade-in slide-in-from-right-4 duration-300">
-                <div className="text-center mb-6">
-                  <div className="w-12 h-12 bg-blue-50 text-brand-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <KeyRound className="w-6 h-6" />
-                  </div>
-                  <h2 className="text-xl font-bold text-slate-800 mb-2">Verifique seu email</h2>
-                  <p className="text-sm text-slate-400">
-                    Insira o código de 6 dígitos que enviamos para o seu email para continuar.
-                  </p>
-                </div>
-
-                <form className="space-y-6">
-                  <div>
-                    <input
-                      type="text"
-                      maxLength={6}
-                      value={token}
-                      onChange={(e) => setToken(e.target.value.replace(/\s/g, ''))}
-                      placeholder="000000"
-                      className="w-full text-center text-3xl font-bold tracking-[0.5em] py-4 border-2 border-slate-200 rounded-xl focus:border-brand-500 focus:outline-none focus:ring-0 text-slate-800 placeholder-slate-200 transition-colors"
-                      autoFocus
-                    />
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={handleCheckToken}
-                    disabled={token.length !== 6 || isCheckingToken}
-                    className="cursor-pointer w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold py-2.5 rounded-md shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] active:scale-95 relative overflow-hidden group disabled:opacity-70 disabled:cursor-not-allowed"
-                  >
-                    {isCheckingToken ? <span className="loading loading-dots loading-md" /> : 'Verificar Código'}
-                  </button>
-                </form>
-
-                <div className="mt-6 text-center">
-                  {isActive ? (
-                    <p className="text-sm text-slate-400 font-medium">
-                      Reenviar código em <span className="text-slate-600 tabular-nums">{formattedTime}</span>
-                    </p>
-                  ) : (
-                    <button
-                      onClick={handleResendCode}
-                      disabled={isResending}
-                      className="flex items-center justify-center gap-2 cursor-pointer w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold py-2.5 rounded-md shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] active:scale-95 relative overflow-hidden group disabled:opacity-70 disabled:cursor-not-allowed"
-                    >
-                      {isResending && <span className="loading loading-dots loading-md" />}
-                      <RefreshCw className="w-5 h-5" />
-                      Reenviar novo código
-                    </button>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* --- STEP 2: RESET PASSWORD --- */}
-            {step === 'PASSWORD' && (
+            {!isSuccess ? (
               <div className="animate-in fade-in slide-in-from-right-4 duration-300">
                 <h2 className="text-xl font-bold text-slate-800 text-center mb-2">Criar nova senha</h2>
                 <p className="text-sm text-slate-400 text-center mb-8">
-                  Código verificado! Agora defina sua nova senha segura.
+                  Defina sua nova senha segura abaixo.
                 </p>
 
                 <form className="space-y-5">
@@ -378,7 +277,7 @@ const ResetPassword: React.FC = () => {
                     <button
                       type="button"
                       onClick={handleSavePassword}
-                      disabled={isSavingPassword || !password || !passwordConfirmation || password !== passwordConfirmation}
+                      disabled={isSavingPassword || !password || !passwordConfirmation || password !== passwordConfirmation || password.length < 8}
                       className="flex items-center justify-center gap-2 cursor-pointer w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold py-2.5 rounded-md shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] active:scale-95 relative overflow-hidden group disabled:opacity-70 disabled:cursor-not-allowed"
                     >
                       {isSavingPassword ? (
@@ -396,10 +295,7 @@ const ResetPassword: React.FC = () => {
                   </div>
                 </form>
               </div>
-            )}
-
-            {/* --- STEP 3: SUCCESS --- */}
-            {step === 'SUCCESS' && (
+            ) : (
               <div className="text-center py-8 animate-in zoom-in-95 duration-300">
                 <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce">
                   <CheckCircle className="w-8 h-8 text-green-600" />

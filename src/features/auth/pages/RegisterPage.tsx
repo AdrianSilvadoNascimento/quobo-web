@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Mail, User, Building, Eye, EyeOff } from 'lucide-react';
-import { authService } from '../services/auth.service';
 import { AlertModal, type AlertType } from '../../../components/AlertModal';
 import { useAuth } from '../../../contexts/AuthContext';
 import QuoboIcon from '@/assets/quobo-icon.png';
@@ -18,7 +17,7 @@ interface Particle {
 }
 
 export const RegisterPage: React.FC = () => {
-  const { loginWithGoogle } = useAuth();
+  const { loginWithGoogle, register } = useAuth();
   const navigate = useNavigate();
   const containerRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -187,7 +186,7 @@ export const RegisterPage: React.FC = () => {
 
     setLoading(true);
     try {
-      await authService.register({
+      await register({
         name: formData.name,
         email: formData.email,
         password: formData.password,
@@ -197,16 +196,16 @@ export const RegisterPage: React.FC = () => {
       setAlert({
         isOpen: true,
         title: 'Sucesso!',
-        message: 'Conta criada com sucesso. Redirecionando para login...',
+        message: 'Conta criada! Verifique seu email para confirmar o cadastro.',
         type: 'success'
       });
 
       setTimeout(() => {
         navigate('/login');
-      }, 2000);
+      }, 3000);
     } catch (error: any) {
       console.error(error);
-      const message = error.response?.data?.message || 'Erro ao criar conta. Tente novamente.';
+      const message = error.message || 'Erro ao criar conta. Tente novamente.';
       setAlert({
         isOpen: true,
         title: 'Erro',

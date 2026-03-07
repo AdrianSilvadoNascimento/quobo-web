@@ -1,6 +1,6 @@
 import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { useAuth, saveRedirectPath } from '../contexts/AuthContext';
 
 import { LoginPage } from '../features/auth/pages/LoginPage';
 import { RegisterPage } from '../features/auth/pages/RegisterPage';
@@ -24,9 +24,23 @@ import { NewAuditPage } from '@/features/audits/pages/NewAuditPage';
 import { AuditDetailsPage } from '@/features/audits/pages/AuditDetailsPage';
 import ForgotPassword from '@/features/auth/pages/ForgotPassword';
 import ResetPassword from '@/features/auth/pages/ResetPassword';
-import { EmailVerificationProcessingPage } from '@/features/auth/pages/EmailVerificationProcessingPage';
+import { AuthCallbackPage } from '@/features/auth/pages/AuthCallbackPage';
 import { ImportPage } from '@/features/import';
 import { FeatureGuard } from '@/components/FeatureGuard';
+import { SuppliersPage } from '@/features/suppliers/pages/SuppliersPage';
+import { SupplierFormPage } from '@/features/suppliers/pages/SupplierFormPage';
+
+/**
+ * Redirects to login while saving the attempted path for route memory.
+ */
+const RedirectToLogin: React.FC = () => {
+  const location = useLocation();
+
+  // Save the current path so we can redirect after login
+  saveRedirectPath(location.pathname + location.search);
+
+  return <Navigate to="/login" replace />;
+};
 
 export const Router: React.FC = () => {
   const { isAuthenticated, isLoading, user } = useAuth();
@@ -45,8 +59,8 @@ export const Router: React.FC = () => {
       <Route path="/login" element={!isAuthenticated ? <LoginPage /> : <Navigate to="/dashboard" />} />
       <Route path="/register" element={!isAuthenticated ? <RegisterPage /> : <Navigate to="/dashboard" />} />
       <Route path="/forgot-password" element={!isAuthenticated ? <ForgotPassword /> : <Navigate to="/dashboard" />} />
-      <Route path="/reset-password" element={!isAuthenticated ? <ResetPassword /> : <Navigate to="/dashboard" />} />
-      <Route path="/verify-email" element={<EmailVerificationProcessingPage />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
+      <Route path="/auth/callback" element={<AuthCallbackPage />} />
       <Route path="/checkout/success" element={<CheckoutSuccessPage />} />
 
       {/* Invite Accept - Always public, regardless of auth status */}
@@ -81,6 +95,11 @@ export const Router: React.FC = () => {
             <Route path="/audits/new" element={<NewAuditPage />} />
             <Route path="/audits/:id" element={<AuditDetailsPage />} />
 
+            {/* Supplier Routes */}
+            <Route path="/suppliers" element={<SuppliersPage />} />
+            <Route path="/suppliers/new" element={<SupplierFormPage />} />
+            <Route path="/suppliers/:id" element={<SupplierFormPage />} />
+
             {/* Import Route */}
             <Route path="/import" element={
               <FeatureGuard check={(feature) => feature?.import_features?.excel_import}>
@@ -107,7 +126,7 @@ export const Router: React.FC = () => {
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Route>
         ) : (
-          <Route path="*" element={<Navigate to="/login" replace />} />
+          <Route path="*" element={<RedirectToLogin />} />
         )
       }
     </Routes>

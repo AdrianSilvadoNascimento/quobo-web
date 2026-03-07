@@ -1,16 +1,17 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback, type ReactNode } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { authService } from '../features/auth/services/auth.service';
 import type { UserModel } from '@/features/account/types/user.model';
 import type { AccountModel, SubscriptionModel } from '@/features/account/types/account.model';
-import { auth, googleProvider } from '../config/firebase';
-import { signInWithPopup } from 'firebase/auth';
+import { supabase } from '../config/supabase';
 import { queryClient } from '../main';
 
 interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (args: { email: string; password: string; remember?: boolean }) => Promise<void>;
+  login: (args: { email: string; password: string }) => Promise<void>;
   loginWithGoogle: () => Promise<void>;
+  register: (args: { name: string; email: string; password: string; business_name?: string }) => Promise<void>;
   logout: () => void;
   forgotPassword: (email: string) => Promise<void>;
   user: UserModel | null;
@@ -29,6 +30,22 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Route memory helpers
+const REDIRECT_KEY = 'quobo_redirect_after_login';
+
+export const saveRedirectPath = (path: string) => {
+  // Don't save auth-related paths
+  const ignorePaths = ['/login', '/register', '/forgot-password', '/reset-password', '/verify-email', '/logout'];
+  if (ignorePaths.some(p => path.startsWith(p))) return;
+  sessionStorage.setItem(REDIRECT_KEY, path);
+};
+
+export const popRedirectPath = (): string | null => {
+  const path = sessionStorage.getItem(REDIRECT_KEY);
+  sessionStorage.removeItem(REDIRECT_KEY);
+  return path;
+};
+
 // Module-level variable to prevent double execution in StrictMode
 let restorationPromise: Promise<any> | null = null;
 
@@ -44,7 +61,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [expirationDate, setExpirationDate] = useState<Date | null>(null);
   const [sessionExpiresAt, setSessionExpiresAt] = useState<Date | null>(null);
 
+  const navigate = useNavigate();
+  const location = useLocation();
   const isRefreshing = useRef(false);
+  const handshakeInProgress = useRef(false);
 
   const updateUserData = useCallback((data: any) => {
     setUser(data.account_user);
@@ -67,12 +87,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setIsAuthenticated(true);
 
     localStorage.setItem('session_active', 'true');
-    if (data.remember_me) {
-      localStorage.setItem('remember_me', 'true');
-    } else {
-      localStorage.removeItem('remember_me');
-    }
-
     localStorage.setItem('user_data', JSON.stringify(data.account_user));
     localStorage.setItem('account_data', JSON.stringify(data.account));
     localStorage.setItem('subscription_data', JSON.stringify(data.subscription));
@@ -93,9 +107,33 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setIsAuthenticated(false);
     authService.setAccessToken(null);
     localStorage.clear();
-    queryClient.clear(); // Clear all React Query cached data
+    queryClient.clear();
   }, []);
 
+  /**
+   * Perform handshake with backend using Supabase access token.
+   * Called after any successful Supabase authentication.
+   */
+  const performHandshake = useCallback(async (supabaseAccessToken: string) => {
+    const data = await authService.handshake(supabaseAccessToken);
+
+    if (!data?.token) {
+      throw new Error('Invalid response from backend handshake');
+    }
+
+    authService.setAccessToken(data.token);
+    updateUserData(data);
+
+    // Route memory: redirect to saved path after login
+    const redirectPath = popRedirectPath();
+    if (redirectPath && redirectPath !== '/login') {
+      navigate(redirectPath, { replace: true });
+    }
+  }, [updateUserData, navigate]);
+
+  /**
+   * Initialize auth on mount — try to restore existing session
+   */
   const initializeAuth = async () => {
     const hasSession = localStorage.getItem('session_active') === 'true';
 
@@ -140,6 +178,36 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     initializeAuth();
   }, []);
 
+  /**
+   * Listen for Supabase auth state changes (OAuth redirect callbacks, token refresh)
+   */
+  useEffect(() => {
+    const { data: { subscription: authSubscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        // Handle OAuth redirect callback or password recovery
+        if (
+          (event === 'SIGNED_IN' || event === 'PASSWORD_RECOVERY') &&
+          session?.access_token &&
+          !handshakeInProgress.current &&
+          !isAuthenticated
+        ) {
+          handshakeInProgress.current = true;
+          try {
+            await performHandshake(session.access_token);
+          } catch (error) {
+            console.error('Handshake after auth state change failed:', error);
+          } finally {
+            handshakeInProgress.current = false;
+          }
+        }
+      }
+    );
+
+    return () => {
+      authSubscription.unsubscribe();
+    };
+  }, [performHandshake, isAuthenticated]);
+
   useEffect(() => {
     const handleDelinquency = () => {
       refreshToken();
@@ -151,18 +219,27 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
   }, []);
 
-  const login = useCallback(async (args: { email: string; password: string; remember?: boolean }) => {
+  /**
+   * Login with email and password via Supabase, then handshake with backend
+   */
+  const login = useCallback(async (args: { email: string; password: string }) => {
     try {
       setIsLoading(true);
-      const data = await authService.login(args);
 
-      if (!data?.token) {
-        throw new Error('Invalid response from server');
+      const { data: supaData, error } = await supabase.auth.signInWithPassword({
+        email: args.email,
+        password: args.password,
+      });
+
+      if (error) {
+        throw new Error(error.message);
       }
 
-      authService.setAccessToken(data.token);
+      if (!supaData.session?.access_token) {
+        throw new Error('No session returned from Supabase');
+      }
 
-      updateUserData(data);
+      await performHandshake(supaData.session.access_token);
     } catch (error) {
       console.error("Login failed", error);
       clearUserData();
@@ -170,24 +247,33 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     } finally {
       setIsLoading(false);
     }
-  }, [updateUserData, clearUserData]);
+  }, [performHandshake, clearUserData]);
 
+  /**
+   * Login with Google via Supabase OAuth redirect
+   */
   const loginWithGoogle = useCallback(async () => {
     try {
       setIsLoading(true);
-      const result = await signInWithPopup(auth, googleProvider);
-      const user = result.user;
-      const idToken = await user.getIdToken();
 
-      const data = await authService.loginWithGoogle(idToken, user.displayName || undefined, user.photoURL || undefined);
-
-      if (!data?.token) {
-        throw new Error('Invalid response from server');
+      // Save current location for route memory before redirect
+      if (location.pathname !== '/login' && location.pathname !== '/register') {
+        saveRedirectPath(location.pathname + location.search);
       }
 
-      authService.setAccessToken(data.token);
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
 
-      updateUserData(data);
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      // Supabase will redirect the browser — the onAuthStateChange listener
+      // will handle the callback and perform the handshake
     } catch (error) {
       console.error("Google Login failed", error);
       clearUserData();
@@ -195,12 +281,55 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     } finally {
       setIsLoading(false);
     }
-  }, [updateUserData, clearUserData]);
+  }, [clearUserData, location]);
 
+  /**
+   * Register with email/password via Supabase, user metadata is passed for backend to pick up
+   */
+  const register = useCallback(async (args: { name: string; email: string; password: string; business_name?: string }) => {
+    try {
+      setIsLoading(true);
+
+      const { data: supaData, error } = await supabase.auth.signUp({
+        email: args.email,
+        password: args.password,
+        options: {
+          data: {
+            name: args.name,
+            business_name: args.business_name,
+          },
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      // If email confirmation is required, the user won't have a confirmed session yet
+      // supaData.user will exist but session may be null until email is confirmed
+      if (supaData.session?.access_token) {
+        // Email confirmation disabled — auto-confirm mode
+        await performHandshake(supaData.session.access_token);
+      }
+      // If session is null, the user needs to confirm email first
+      // The calling page should show a "check your email" message
+    } catch (error) {
+      console.error("Registration failed", error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [performHandshake]);
+
+  /**
+   * Logout: sign out from Supabase + backend
+   */
   const logout = useCallback(async () => {
     try {
       setIsLoading(true);
       await authService.logout();
+      await supabase.auth.signOut();
     } catch (error) {
       console.error("Logout failed", error);
     } finally {
@@ -209,11 +338,20 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, [clearUserData]);
 
+  /**
+   * Forgot password via Supabase
+   */
   const forgotPassword = useCallback(async (email: string) => {
     try {
-      await authService.forgotPassword(email);
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) {
+        throw new Error(error.message);
+      }
     } catch (error) {
       console.error("Forgot password failed", error);
+      throw error;
     }
   }, []);
 
@@ -251,6 +389,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       isLoading,
       login,
       loginWithGoogle,
+      register,
       logout,
       forgotPassword,
       user,
