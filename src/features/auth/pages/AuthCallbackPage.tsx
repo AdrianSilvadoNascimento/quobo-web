@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/config/supabase';
 import { authService } from '@/features/auth/services/auth.service';
 import { popRedirectPath } from '@/contexts/AuthContext';
+import { publicInviteService } from '@/features/team/services/public-invite.service';
 import QuoboIcon from '@/assets/quobo-icon.png';
 
 /**
@@ -26,6 +27,19 @@ export const AuthCallbackPage: React.FC = () => {
 
         if (!data.session?.access_token) {
           throw new Error('Nenhuma sessão encontrada. Tente fazer login novamente.');
+        }
+
+        // Handle pending invite acceptance via Google OAuth
+        const pendingInviteToken = localStorage.getItem('pending_invite_token');
+        if (pendingInviteToken) {
+          localStorage.removeItem('pending_invite_token');
+          const inviteResult = await publicInviteService.acceptInviteWithGoogle(
+            pendingInviteToken,
+            data.session.access_token,
+          );
+          if (!inviteResult.success) {
+            throw new Error(inviteResult.message || 'Erro ao aceitar convite. Verifique se o email do Google corresponde ao convite.');
+          }
         }
 
         // Perform handshake with backend

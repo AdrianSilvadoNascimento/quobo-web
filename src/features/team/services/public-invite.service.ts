@@ -51,4 +51,12 @@ export const publicInviteService = {
     const response = await server.api.post<AcceptInviteResponse>(`/api/public/invite/${token}/accept`, data);
     return response.data;
   },
+
+  async acceptInviteWithGoogle(token: string, supabaseAccessToken: string): Promise<AcceptInviteResponse> {
+    const response = await server.api.post<AcceptInviteResponse>(
+      `/api/public/invite/${token}/accept-google`,
+      { supabase_access_token: supabaseAccessToken },
+    );
+    return response.data;
+  },
 };
