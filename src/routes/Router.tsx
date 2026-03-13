@@ -29,6 +29,7 @@ import { ImportPage } from '@/features/import';
 import { FeatureGuard } from '@/components/FeatureGuard';
 import { SuppliersPage } from '@/features/suppliers/pages/SuppliersPage';
 import { SupplierFormPage } from '@/features/suppliers/pages/SupplierFormPage';
+import { IntegrationPage } from '@/features/account/pages/IntegrationPage';
 
 /**
  * Redirects to login while saving the attempted path for route memory.
@@ -120,6 +121,12 @@ export const Router: React.FC = () => {
                 user?.type === 'OWNER' || user?.type === 'ADMIN'
                   ? <FinancePage />
                   : <Navigate to="/account/profile" replace />
+              } />
+              {/* Integrations page - gated by plan feature */}
+              <Route path="integrations" element={
+                <FeatureGuard check={(feature) => feature?.api_access?.enabled}>
+                  <IntegrationPage />
+                </FeatureGuard>
               } />
             </Route>
 
