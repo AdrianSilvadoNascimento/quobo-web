@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Webhook, Plus, Trash2, Edit3, ExternalLink } from 'lucide-react';
 import { integrationApi } from '../services/integration.service';
 import type { WebhookEndpoint } from '../services/integration.service';
+import { Button } from '@/components/ui';
 
 const EVENT_LABELS: Record<string, string> = {
   'item.created': 'Item Criado',
@@ -129,12 +130,11 @@ export const WebhookSection: React.FC<WebhookSectionProps> = ({ onViewEvents }) 
           </p>
         </div>
         <div className="flex gap-2">
-          <button className="btn btn-ghost btn-sm gap-2" onClick={onViewEvents}>
-            <ExternalLink className="w-4 h-4" />
+          <Button variant='secondary' icon={<ExternalLink className="w-4 h-4" />} onClick={onViewEvents}>
             Ver Eventos
-          </button>
-          <button
-            className="btn btn-primary btn-sm gap-2"
+          </Button>
+          <Button
+            variant='primary'
             onClick={() => {
               setShowAddModal(true);
               setFormUrl('');
@@ -143,7 +143,7 @@ export const WebhookSection: React.FC<WebhookSectionProps> = ({ onViewEvents }) 
           >
             <Plus className="w-4 h-4" />
             Adicionar URL
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -158,11 +158,10 @@ export const WebhookSection: React.FC<WebhookSectionProps> = ({ onViewEvents }) 
           {endpoints.map((ep) => (
             <div
               key={ep.id}
-              className={`border rounded-lg p-4 transition-colors ${
-                ep.is_active
-                  ? 'border-slate-200 bg-white'
-                  : 'border-slate-100 bg-slate-50 opacity-60'
-              }`}
+              className={`border rounded-lg p-4 transition-colors ${ep.is_active
+                ? 'border-slate-200 bg-white'
+                : 'border-slate-100 bg-slate-50 opacity-60'
+                }`}
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1 min-w-0">
@@ -237,11 +236,10 @@ export const WebhookSection: React.FC<WebhookSectionProps> = ({ onViewEvents }) 
                 {availableEvents.map((event) => (
                   <label
                     key={event}
-                    className={`flex items-center gap-2 p-2 rounded-lg border cursor-pointer transition-colors ${
-                      formEvents.includes(event)
-                        ? 'border-primary bg-primary/5'
-                        : 'border-slate-200 hover:border-slate-300'
-                    }`}
+                    className={`flex items-center gap-2 p-2 rounded-lg border cursor-pointer transition-colors ${formEvents.includes(event)
+                      ? 'border-primary bg-primary/5'
+                      : 'border-slate-200 hover:border-slate-300'
+                      }`}
                   >
                     <input
                       type="checkbox"
@@ -256,27 +254,28 @@ export const WebhookSection: React.FC<WebhookSectionProps> = ({ onViewEvents }) 
             </div>
 
             <div className="modal-action">
-              <button
-                className="btn"
+              <Button
+                variant='secondary'
+                disabled={submitting}
                 onClick={() => {
                   setShowAddModal(false);
                   setEditingEndpoint(null);
                 }}
               >
                 Cancelar
-              </button>
-              <button
-                className="btn btn-primary"
+              </Button>
+              <Button
+                variant='primary'
                 onClick={editingEndpoint ? handleEdit : handleAdd}
+                isLoading={submitting}
                 disabled={
                   submitting ||
                   formEvents.length === 0 ||
                   (!editingEndpoint && !formUrl.trim())
                 }
               >
-                {submitting && <span className="loading loading-spinner loading-xs"></span>}
                 {editingEndpoint ? 'Salvar' : 'Adicionar'}
-              </button>
+              </Button>
             </div>
           </div>
           <form method="dialog" className="modal-backdrop">

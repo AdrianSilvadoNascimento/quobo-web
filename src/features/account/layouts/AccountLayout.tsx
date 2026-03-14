@@ -1,22 +1,17 @@
 import React from 'react';
 import { Link, useLocation, Outlet } from 'react-router-dom';
-import { User, CreditCard, Settings, Plug } from 'lucide-react';
+import { User, CreditCard, Settings } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
 export const AccountLayout: React.FC = () => {
   const location = useLocation();
-  const { isAdmin, subscription } = useAuth();
+  const { isAdmin } = useAuth();
   const currentPath = location.pathname;
-
-  const planFeatures = subscription?.plan?.features as any;
-  const hasApiAccess = planFeatures?.api_access?.enabled;
 
   const tabs = [
     { label: 'Minha Conta', path: '/account/profile', icon: User },
     // Finance tab only visible for admins
     ...(isAdmin ? [{ label: 'Financeiro', path: '/account/finance', icon: CreditCard }] : []),
-    // Integrations tab only visible if plan supports API access
-    ...(hasApiAccess ? [{ label: 'Integrações', path: '/account/integrations', icon: Plug }] : []),
   ];
 
   return (

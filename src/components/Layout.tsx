@@ -81,7 +81,27 @@ export const Layout: React.FC<LayoutProps> = ({ children, onLogout }) => {
             ))}
           </div>
 
-          <div className="p-4 border-t border-slate-100">
+          <div className="p-4 border-t border-slate-100 flex flex-col gap-4">
+            {/* Documentation Highlight */}
+            <div className="bg-gradient-to-br from-brand-50 to-brand-100/50 rounded-2xl p-4 border border-brand-100 relative overflow-hidden group">
+              <div className="absolute top-0 right-0 p-4 opacity-10 transform translate-x-4 -translate-y-4 group-hover:scale-110 group-hover:rotate-12 transition-transform duration-500">
+                <Box className="w-16 h-16 text-brand-600" />
+              </div>
+              <h4 className="font-semibold text-brand-900 text-sm mb-1 relative z-10">
+                Precisa de ajuda?
+              </h4>
+              <p className="text-xs text-brand-700/80 mb-3 relative z-10 leading-relaxed">
+                Acesse nossa documentação completa e aprenda a usar todas as ferramentas.
+              </p>
+              <a 
+                href="#"
+                className="inline-flex items-center text-xs font-bold text-white bg-brand-600 hover:bg-brand-700 px-3 py-1.5 rounded-lg shadow-sm transition-colors relative z-10 w-full justify-center"
+              >
+                Ver documentação
+              </a>
+            </div>
+
+            {/* Logout Button */}
             <button
               onClick={onLogout}
               className="flex items-center w-full px-3 py-2.5 rounded-lg text-sm font-medium text-slate-600 hover:bg-red-50 hover:text-red-600 transition-colors"

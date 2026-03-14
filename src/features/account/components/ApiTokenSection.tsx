@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Key, Eye, EyeOff, Copy, Trash2, Plus, Check, AlertTriangle } from 'lucide-react';
 import { integrationApi } from '../services/integration.service';
 import type { ApiToken } from '../services/integration.service';
+import { Button } from '@/components/ui';
 
 export const ApiTokenSection: React.FC = () => {
   const [tokens, setTokens] = useState<ApiToken[]>([]);
@@ -129,13 +130,13 @@ export const ApiTokenSection: React.FC = () => {
             Use tokens de API para acessar seus dados programaticamente.
           </p>
         </div>
-        <button
-          className="btn btn-primary btn-sm gap-2"
+        <Button
+          variant='primary'
+          icon={<Plus className="w-4 h-4" />}
           onClick={() => setShowNewTokenModal(true)}
         >
-          <Plus className="w-4 h-4" />
           Gerar Token
-        </button>
+        </Button>
       </div>
 
       {/* Token List */}
@@ -149,11 +150,10 @@ export const ApiTokenSection: React.FC = () => {
           {tokens.map((token) => (
             <div
               key={token.id}
-              className={`border rounded-lg p-4 transition-colors ${
-                token.is_active
+              className={`border rounded-lg p-4 transition-colors ${token.is_active
                   ? 'border-slate-200 bg-white'
                   : 'border-slate-100 bg-slate-50 opacity-60'
-              }`}
+                }`}
             >
               <div className="flex items-center justify-between">
                 <div className="flex-1 min-w-0">

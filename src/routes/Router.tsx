@@ -29,7 +29,10 @@ import { ImportPage } from '@/features/import';
 import { FeatureGuard } from '@/components/FeatureGuard';
 import { SuppliersPage } from '@/features/suppliers/pages/SuppliersPage';
 import { SupplierFormPage } from '@/features/suppliers/pages/SupplierFormPage';
-import { IntegrationPage } from '@/features/account/pages/IntegrationPage';
+import { SettingsLayout } from '@/features/settings/layouts/SettingsLayout';
+import { UnitOfMeasureSettingsPage } from '@/features/settings/pages/UnitOfMeasureSettingsPage';
+import { IntegrationSettingsPage } from '@/features/settings/pages/IntegrationSettingsPage';
+import { WebhookSettingsPage } from '@/features/settings/pages/WebhookSettingsPage';
 
 /**
  * Redirects to login while saving the attempted path for route memory.
@@ -122,10 +125,20 @@ export const Router: React.FC = () => {
                   ? <FinancePage />
                   : <Navigate to="/account/profile" replace />
               } />
-              {/* Integrations page - gated by plan feature */}
+            </Route>
+
+            {/* Settings Routes */}
+            <Route path="/settings" element={<SettingsLayout />}>
+              <Route index element={<Navigate to="unit-of-measure" replace />} />
+              <Route path="unit-of-measure" element={<UnitOfMeasureSettingsPage />} />
               <Route path="integrations" element={
                 <FeatureGuard check={(feature) => feature?.api_access?.enabled}>
-                  <IntegrationPage />
+                  <IntegrationSettingsPage />
+                </FeatureGuard>
+              } />
+              <Route path="webhooks" element={
+                <FeatureGuard check={(feature) => feature?.api_access?.enabled}>
+                  <WebhookSettingsPage />
                 </FeatureGuard>
               } />
             </Route>
